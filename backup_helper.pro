@@ -7,12 +7,14 @@ SOURCES += main.cpp \
     performs.cpp \
     checks.cpp \
     auxiliary.cpp \
-    config.cpp
+    config.cpp \
+    globalexceptions.cpp
 
 HEADERS += \
     services.hpp \
     performs.hpp \
     checks.hpp \
     auxiliary.hpp \
-    config.hpp
+    config.hpp \
+    globalexceptions.hpp
 
