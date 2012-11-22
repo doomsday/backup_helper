@@ -11,23 +11,24 @@ int main(int argc, char *argv[]) {
         try {
             Maintenance.shutdownSnrg();
         }
-        catch (ifstream::failure) {
-            GeneralFatalError e("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
-            throw e;
-        }
-        catch (processManagementError &e) {
-            GeneralFatalError e1(e.errorMessage);
+        catch (IOError& e) {                                                    // nothing to do
+            FatalError e1(e.errorMessage);
             throw e1;
         }
+        catch (processManagementError &e) {                                     // nothing to do
+            FatalError e1(e.errorMessage);
+            throw e1;
+        }
+        catch (shExecuteError &e){                                              // nothing to do
+            FatalError e1(e.errorMessage);
+            throw e1;
+        }
+
         Maintenance.transferBackups(argc, argv);
         Maintenance.cleanBackups(argc, argv);
         Maintenance.sendMail(argc, argv);
     }
-    catch (shExecuteError &e){
-        std::cout << "\n2: Fatal Error! Unable to process. The following error detected: " << e.errorMessage;                             // Interprets the value of errno as an error message, and prints it to stderr
-        return 1;
-    }
-    catch (GeneralFatalError& e){
+    catch (FatalError& e){
         std::cout << e.errorMessage;
         std::cout << "\n2: Fatal Error. Unable to process\n";
         return 1;

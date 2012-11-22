@@ -5,12 +5,12 @@ class GlobalExceptions
 {
 };
 
-class GeneralFatalError : public GlobalExceptions {
+class FatalError : public GlobalExceptions {
     public:
         const char* errorMessage;
 
-        GeneralFatalError(const char* pErrorMessage);
-        ~GeneralFatalError();
+        FatalError(const char* pErrorMessage);
+        ~FatalError();
 };
 
 class shExecuteError : public GlobalExceptions {
@@ -19,6 +19,14 @@ class shExecuteError : public GlobalExceptions {
 
         shExecuteError(const char* pErrorMessage);
         ~shExecuteError();
+};
+
+class IOError : public GlobalExceptions {
+    public:
+        char* errorMessage;
+
+        IOError(char* pErrorMessage);
+        ~IOError();
 };
 
 class processManagementError : public GlobalExceptions {

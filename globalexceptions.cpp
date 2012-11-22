@@ -1,9 +1,9 @@
 #include "globalexceptions.hpp"
 
-GeneralFatalError::GeneralFatalError(const char *pErrorMessage):
+FatalError::FatalError(const char *pErrorMessage):
     errorMessage(pErrorMessage)
 {}
-GeneralFatalError::~GeneralFatalError(){
+FatalError::~FatalError(){
     delete errorMessage;
 }
 
@@ -11,6 +11,13 @@ shExecuteError::shExecuteError(const char* pErrorMessage):
     errorMessage(pErrorMessage)
 {}
 shExecuteError::~shExecuteError(){
+    delete errorMessage;
+}
+
+IOError::IOError(char *pErrorMessage):
+    errorMessage(pErrorMessage)
+{}
+IOError::~IOError(){
     delete errorMessage;
 }
 

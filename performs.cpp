@@ -36,8 +36,8 @@ void Performs::executeSh(int argc_p, char *argv_p[]){
             if (w == -1) {
                 throw shExecuteError(strerror(errno));
             }
-            if (WIFEXITED(status)) {                                            // This macro queries the child termination status provided by the wait and waitpid functions,
-                // and determines whether the child process ended normally
+            if (WIFEXITED(status)) {                                            /* This macro queries the child termination status provided by the wait and waitpid functions,
+                                                                                   and determines whether the child process ended normally */
                 std::cout << "exited, status=" << WEXITSTATUS(status);
             } else if (WIFSIGNALED(status)) {
                 std::cout << "killed by signal " << WTERMSIG(status);
@@ -62,7 +62,12 @@ int Performs::shutdownSnrg() {
 
     is.exceptions ( ifstream::failbit | ifstream::badbit );                     // exception mask
 
-    is.open("/var/run/synergy/arta-synergy-jboss.pid", ios::binary);
+    try {
+        is.open("/var/run/synergy/arta-synergy-jboss.pid", ios::binary);
+    } catch (ifstream::failure) {
+        IOError e("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+        throw e;
+    }
     is.seekg(0, ios::end);
     length = is.tellg();
     is.seekg(0, ios::beg);
