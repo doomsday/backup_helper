@@ -1,5 +1,6 @@
 #include <performer.hpp>
 #include <globalexceptions.hpp>
+#include <iostream>
 
 using namespace std;
 

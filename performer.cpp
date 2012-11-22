@@ -1,3 +1,15 @@
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <unistd.h>
+#include <cstring>
+#include <errno.h>
 #include "performer.hpp"
 
 int Performer::transferBackups(int argc_p, char *argv_p[]){
@@ -5,22 +17,19 @@ int Performer::transferBackups(int argc_p, char *argv_p[]){
              2. perform non-recursive search to find if a directory is a synergy backup folder
              3. if not - use scp, but only for transferring no more than 5-6GB of data, it takes too much time otherwise
     */
-    stringToExecute = "/usr/bin/find /var/backups/synergy/* -type d -ctime -1 -exec scp -r {} 192.168.10.195:/var/backups/synergy_reserve ';'";
-    executeSh(argc_p, argv_p);
+    executeSh(argc_p, argv_p, "/usr/bin/find /var/backups/synergy/* -type d -ctime -1 -exec scp -r {} 192.168.10.195:/var/backups/synergy_reserve ';'");
     return 0;
 }
 int Performer::cleanBackups(int argc_p, char *argv_p[]){
-    stringToExecute = "/usr/bin/find /var/backups/synergy/* -type d -ctime +7 -delete";
-    executeSh(argc_p, argv_p);
+    executeSh(argc_p, argv_p, "/usr/bin/find /var/backups/synergy/* -type d -ctime +7 -delete");
     return 0;
 }
 int Performer::sendMail(int argc_p, char *argv_p[]){
-    stringToExecute = "echo \"Backups has been (hopefully) made at: $(date).\" | mail -s \"Medicare: Backups has just been made\" -r notificator_medicare@medicare.kz support@arta.kz";
-    executeSh(argc_p, argv_p);
+    executeSh(argc_p, argv_p, "echo \"Backups has been (hopefully) made at: $(date).\" | mail -s \"Medicare: Backups has just been made\" -r notificator_medicare@medicare.kz support@arta.kz");
     return 0;
 }
 
-void Performer::executeSh(int argc_p, char *argv_p[]){
+void Performer::executeSh(int argc_p, char *argv_p[], char *stringToExecute){
 
     pid_t cpid, w;
     int status;
@@ -90,7 +99,7 @@ int Performer::shutdownSynergy() {
         sleep (1);
         ++killwait_counter;
         if (killwait_counter >= 120) {
-            std::cout << "\nCouldn't stop process with KILL signal. Trying to force termination.\n";
+//            std::cout << "\nCouldn't stop process with KILL signal. Trying to force termination.\n";
             kill(*buffer, SIGTERM);
             sleep (5);
             if (popen("/bin/pidof java", "r")) {
