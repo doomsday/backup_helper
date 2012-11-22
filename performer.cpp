@@ -1,6 +1,6 @@
-#include "performs.hpp"
+#include "performer.hpp"
 
-int Performs::transferBackups(int argc_p, char *argv_p[]){
+int Performer::transferBackups(int argc_p, char *argv_p[]){
     /* TODO: 1. check fstab if there is mounted nfs directories
              2. perform non-recursive search to find if a directory is a synergy backup folder
              3. if not - use scp, but only for transferring no more than 5-6GB of data, it takes too much time otherwise
@@ -9,25 +9,25 @@ int Performs::transferBackups(int argc_p, char *argv_p[]){
     executeSh(argc_p, argv_p);
     return 0;
 }
-int Performs::cleanBackups(int argc_p, char *argv_p[]){
+int Performer::cleanBackups(int argc_p, char *argv_p[]){
     stringToExecute = "/usr/bin/find /var/backups/synergy/* -type d -ctime +7 -delete";
     executeSh(argc_p, argv_p);
     return 0;
 }
-int Performs::sendMail(int argc_p, char *argv_p[]){
+int Performer::sendMail(int argc_p, char *argv_p[]){
     stringToExecute = "echo \"Backups has been (hopefully) made at: $(date).\" | mail -s \"Medicare: Backups has just been made\" -r notificator_medicare@medicare.kz support@arta.kz";
     executeSh(argc_p, argv_p);
     return 0;
 }
 
-void Performs::executeSh(int argc_p, char *argv_p[]){
+void Performer::executeSh(int argc_p, char *argv_p[]){
 
     pid_t cpid, w;
     int status;
 
     cpid = system(stringToExecute);                                             // /usr/bin/find: `/var/backups/synergy/*': No such file or directory
     if (cpid == -1) {
-        throw shExecuteError(strerror(errno));                                  // strerror: Get pointer to error message string
+        throw ShellExecuteError(strerror(errno));                                  // strerror: Get pointer to error message string
     }
     if (cpid == 0) {
         std::cout << "Child PID is" << (long)getpid();
@@ -38,7 +38,7 @@ void Performs::executeSh(int argc_p, char *argv_p[]){
         do {
             w = waitpid(cpid, &status, WUNTRACED | WCONTINUED);                 // waiting the child process to perform requested actions
             if (w == -1) {
-                throw shExecuteError(strerror(errno));
+                throw ShellExecuteError(strerror(errno));
             }
             if (WIFEXITED(status)) {                                            /* This macro queries the child termination status provided by the wait and waitpid functions,
                                                                                    and determines whether the child process ended normally */
@@ -55,12 +55,12 @@ void Performs::executeSh(int argc_p, char *argv_p[]){
     }
 }
 
-int Performs::shutdownSnrg() {
+int Performer::shutdownSynergy() {
     using std::ifstream;
     using std::ios;
     // prepare to open
     int length;
-    char* buffer;
+    char* buffer(0);
     int killwait_counter;
     ifstream is;
     // open

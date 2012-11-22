@@ -15,9 +15,8 @@
 #include <errno.h>
 
 #include <globalexceptions.hpp>
-#include <services.hpp>
 
-class Performs : public Services
+class Performer
 {
         void executeSh(int argc_p, char* argv_p[]);
         char* stringToExecute;
@@ -26,7 +25,7 @@ class Performs : public Services
         int transferBackups(int argc_p, char* argv_p[]);
         int cleanBackups(int argc_p, char* argv_p[]);
         int sendMail(int argc_p, char* argv_p[]);
-        int shutdownSnrg();
+        int shutdownSynergy();
 };
 
 #endif // PERFORMS_HPP

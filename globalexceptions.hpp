@@ -13,12 +13,12 @@ class FatalError : public GlobalExceptions {
         ~FatalError();
 };
 
-class shExecuteError : public GlobalExceptions {
+class ShellExecuteError : public GlobalExceptions {
     public:
         const char* errorMessage;
 
-        shExecuteError(const char* pErrorMessage);
-        ~shExecuteError();
+        ShellExecuteError(const char* pErrorMessage);
+        ~ShellExecuteError();
 };
 
 class IOError : public GlobalExceptions {

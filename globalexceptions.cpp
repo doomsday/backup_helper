@@ -7,10 +7,10 @@ FatalError::~FatalError(){
     delete errorMessage;
 }
 
-shExecuteError::shExecuteError(const char* pErrorMessage):
+ShellExecuteError::ShellExecuteError(const char* pErrorMessage):
     errorMessage(pErrorMessage)
 {}
-shExecuteError::~shExecuteError(){
+ShellExecuteError::~ShellExecuteError(){
     delete errorMessage;
 }
 

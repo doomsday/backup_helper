@@ -1,15 +1,15 @@
-#include <performs.hpp>
-#include <checks.hpp>
+#include <performer.hpp>
+#include <globalexceptions.hpp>
 
 using namespace std;
 
 int main(int argc, char *argv[]) {
 
-    Performs Maintenance;
+    Performer maintenance;
 
     try {
         try {
-            Maintenance.shutdownSnrg();
+            maintenance.shutdownSynergy();
         }
         catch (IOError& e) {                                                    // nothing to do
             FatalError e1(e.errorMessage);
@@ -19,14 +19,14 @@ int main(int argc, char *argv[]) {
             FatalError e1(e.errorMessage);
             throw e1;
         }
-        catch (shExecuteError &e){                                              // nothing to do
+        catch (ShellExecuteError &e){                                              // nothing to do
             FatalError e1(e.errorMessage);
             throw e1;
         }
 
-        Maintenance.transferBackups(argc, argv);
-        Maintenance.cleanBackups(argc, argv);
-        Maintenance.sendMail(argc, argv);
+        maintenance.transferBackups(argc, argv);
+        maintenance.cleanBackups(argc, argv);
+        maintenance.sendMail(argc, argv);
     }
     catch (FatalError& e){
         std::cout << e.errorMessage;

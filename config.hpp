@@ -1,9 +1,7 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#include <auxiliary.hpp>
-
-class Config : public Auxiliary
+class Config
 {
     public:
         Config();
