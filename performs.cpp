@@ -1,6 +1,10 @@
 #include "performs.hpp"
 
 int Performs::transferBackups(int argc_p, char *argv_p[]){
+    /* TODO: 1. check fstab if there is mounted nfs directories
+             2. perform non-recursive search to find if a directory is a synergy backup folder
+             3. if not - use scp, but only for transferring no more than 5-6GB of data, it takes too much time otherwise
+    */
     stringToExecute = "/usr/bin/find /var/backups/synergy/* -type d -ctime -1 -exec scp -r {} 192.168.10.195:/var/backups/synergy_reserve ';'";
     executeSh(argc_p, argv_p);
     return 0;
@@ -54,34 +58,38 @@ void Performs::executeSh(int argc_p, char *argv_p[]){
 int Performs::shutdownSnrg() {
     using std::ifstream;
     using std::ios;
-
+    // prepare to open
     int length;
     char* buffer;
     int killwait_counter;
     ifstream is;
-
+    // open
     is.exceptions ( ifstream::failbit | ifstream::badbit );                     // exception mask
-
     try {
         is.open("/var/run/synergy/arta-synergy-jboss.pid", ios::binary);
     } catch (ifstream::failure) {
         IOError e("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
         throw e;
     }
+    // prepare to read
     is.seekg(0, ios::end);
     length = is.tellg();
     is.seekg(0, ios::beg);
-
     buffer = new char[length];
-
-    is.read(buffer, length);
-
+    // read
+    is.exceptions ( ifstream::eofbit | ifstream::failbit | ifstream::badbit );                     // exception mask
+    try {
+        is.read(buffer, length);
+    } catch (ifstream::failure) {
+        IOError e("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+        throw e;
+    }
+    // kill anyway
     kill(*buffer, SIGKILL);
-    // FILE* f = popen("/bin/pidof process_name", "r");
-    do {
+    do {    // polling
         sleep (1);
         ++killwait_counter;
-        if (killwait_counter >= 60) {
+        if (killwait_counter >= 120) {
             std::cout << "\nCouldn't stop process with KILL signal. Trying to force termination.\n";
             kill(*buffer, SIGTERM);
             sleep (5);
