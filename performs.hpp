@@ -22,7 +22,7 @@ class Performs : public Services
         void executeSh(int argc_p, char* argv_p[]);
         char* stringToExecute;
     public:
-        ~Performs();
+//        ~Performs();
         int transferBackups(int argc_p, char* argv_p[]);
         int cleanBackups(int argc_p, char* argv_p[]);
         int sendMail(int argc_p, char* argv_p[]);
