@@ -6,16 +6,27 @@ class GlobalExceptions
 };
 
 class GeneralFatalError : public GlobalExceptions {
-public:
-    char* errorMessage;
-};
-
-class shExecuteError : public GlobalExceptions
-{
     public:
         const char* errorMessage;
-        shExecuteError(const char* pErrorMessage);
+
+        GeneralFatalError(const char* pErrorMessage);
+        ~GeneralFatalError();
 };
-class IOError : public GlobalExceptions {};
-class processManagementError : public GlobalExceptions {};
+
+class shExecuteError : public GlobalExceptions {
+    public:
+        const char* errorMessage;
+
+        shExecuteError(const char* pErrorMessage);
+        ~shExecuteError();
+};
+
+class processManagementError : public GlobalExceptions {
+    public:
+        char* errorMessage;
+
+        processManagementError(char* pErrorMessage);
+        ~processManagementError();
+};
+
 #endif // GLOBALEXCEPTIONS_HPP

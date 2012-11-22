@@ -23,20 +23,20 @@ void Performs::executeSh(int argc_p, char *argv_p[]){
 
     cpid = system(stringToExecute);                                             // /usr/bin/find: `/var/backups/synergy/*': No such file or directory
     if (cpid == -1) {
-        throw shExecuteError(strerror(errno));
+        throw shExecuteError(strerror(errno));                                  // strerror: Get pointer to error message string
     }
     if (cpid == 0) {
         std::cout << "Child PID is" << (long)getpid();
         if (argc_p == 1)
             pause();
         _exit(atoi(argv_p[1]));
-    } else {                                                                // got not error but "the return status of the command"
+    } else {                                                                    // got not error but "the return status of the command"
         do {
-            w = waitpid(cpid, &status, WUNTRACED | WCONTINUED);             // waiting the child process to perform requested actions
+            w = waitpid(cpid, &status, WUNTRACED | WCONTINUED);                 // waiting the child process to perform requested actions
             if (w == -1) {
-                throw shExecuteError(strerror(errno));                     // strerror: Get pointer to error message string
+                throw shExecuteError(strerror(errno));
             }
-            if (WIFEXITED(status)) {                                        // This macro queries the child termination status provided by the wait and waitpid functions,
+            if (WIFEXITED(status)) {                                            // This macro queries the child termination status provided by the wait and waitpid functions,
                 // and determines whether the child process ended normally
                 std::cout << "exited, status=" << WEXITSTATUS(status);
             } else if (WIFSIGNALED(status)) {
@@ -52,18 +52,17 @@ void Performs::executeSh(int argc_p, char *argv_p[]){
 }
 
 int Performs::shutdownSnrg() {
-    int length;
-    char* buffer;
-    int killwait_counter;
-
     using std::ifstream;
     using std::ios;
 
+    int length;
+    char* buffer;
+    int killwait_counter;
     ifstream is;
+
     is.exceptions ( ifstream::failbit | ifstream::badbit );                     // exception mask
 
     is.open("/var/run/synergy/arta-synergy-jboss.pid", ios::binary);
-
     is.seekg(0, ios::end);
     length = is.tellg();
     is.seekg(0, ios::beg);
@@ -74,25 +73,20 @@ int Performs::shutdownSnrg() {
 
     kill(*buffer, SIGKILL);
     // FILE* f = popen("/bin/pidof process_name", "r");
-    try {
-        do {
-            sleep (1);
-            ++killwait_counter;
-            if (killwait_counter >= 60) {
-                std::cout << "\nCouldn't stop process with KILL signal. Trying to force termination.\n";
-                kill(*buffer, SIGTERM);
-                sleep (5);
-                if (popen("/bin/pidof java", "r")) {
-                    std::cout << "Couldn't force termination!\n";
-                    GeneralFatalError e;
-                    throw e;
-                }
+    do {
+        sleep (1);
+        ++killwait_counter;
+        if (killwait_counter >= 60) {
+            std::cout << "\nCouldn't stop process with KILL signal. Trying to force termination.\n";
+            kill(*buffer, SIGTERM);
+            sleep (5);
+            if (popen("/bin/pidof java", "r")) {
+                processManagementError e("Couldn't force termination!\n");
+                throw e;
             }
-        } while (!access("/var/run/synergy/arta-synergy-jboss.pid", F_OK));
-    }
-    catch (processManagementError &e) {
+        }
+    } while (!access("/var/run/synergy/arta-synergy-jboss.pid", F_OK));
 
-    }
     is.close();
     delete[] buffer;
     return 0;
