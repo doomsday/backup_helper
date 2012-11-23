@@ -2,8 +2,6 @@
 #include <globalexceptions.hpp>
 #include <iostream>
 
-using namespace std;
-
 int main(int argc, char *argv[]) {
 
     Performer maintenance;
@@ -16,7 +14,7 @@ int main(int argc, char *argv[]) {
             FatalError e1(e.errorMessage);
             throw e1;
         }
-        catch (processManagementError &e) {                                     // nothing to do
+        catch (ProcessManagementError &e) {                                     // nothing to do
             FatalError e1(e.errorMessage);
             throw e1;
         }

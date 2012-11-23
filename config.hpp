@@ -4,9 +4,8 @@
 class Config
 {
     public:
-        Config();
         int checkConfig();
-        int readConfig();
+        int readConfig(int argc_p, char* argv_p[]);
         int createConfig();
         int changeConfig();
 };

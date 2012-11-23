@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -103,7 +103,7 @@ int Performer::shutdownSynergy() {
             kill(*buffer, SIGTERM);
             sleep (5);
             if (popen("/bin/pidof java", "r")) {
-                processManagementError e("Couldn't force termination!\n");
+                ProcessManagementError e("Couldn't force termination!\n");
                 throw e;
             }
         }

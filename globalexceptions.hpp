@@ -1,11 +1,7 @@
 #ifndef GLOBALEXCEPTIONS_HPP
 #define GLOBALEXCEPTIONS_HPP
 
-class GlobalExceptions
-{
-};
-
-class FatalError : public GlobalExceptions {
+class FatalError {
     public:
         const char* errorMessage;
 
@@ -13,7 +9,7 @@ class FatalError : public GlobalExceptions {
         ~FatalError();
 };
 
-class ShellExecuteError : public GlobalExceptions {
+class ShellExecuteError {
     public:
         const char* errorMessage;
 
@@ -21,7 +17,7 @@ class ShellExecuteError : public GlobalExceptions {
         ~ShellExecuteError();
 };
 
-class IOError : public GlobalExceptions {
+class IOError {
     public:
         char* errorMessage;
 
@@ -29,12 +25,12 @@ class IOError : public GlobalExceptions {
         ~IOError();
 };
 
-class processManagementError : public GlobalExceptions {
+class ProcessManagementError {
     public:
         char* errorMessage;
 
-        processManagementError(char* pErrorMessage);
-        ~processManagementError();
+        ProcessManagementError(char* pErrorMessage);
+        ~ProcessManagementError();
 };
 
 #endif // GLOBALEXCEPTIONS_HPP

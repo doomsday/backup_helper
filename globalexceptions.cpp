@@ -21,10 +21,10 @@ IOError::~IOError(){
     delete errorMessage;
 }
 
-processManagementError::processManagementError(char *pErrorMessage):
+ProcessManagementError::ProcessManagementError(char *pErrorMessage):
     errorMessage(pErrorMessage)
 {}
-processManagementError::~processManagementError(){
+ProcessManagementError::~ProcessManagementError(){
     delete errorMessage;
 }
 
