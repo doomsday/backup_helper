@@ -12,11 +12,11 @@
 #include <errno.h>
 #include "performer.hpp"
 
+Performer::Performer(Config *ptr):
+    pCnf(ptr)
+{}
+
 int Performer::transferBackups(int argc_p, char *argv_p[]){
-    /* TODO: 1. check fstab if there is mounted nfs directories
-             2. perform non-recursive search to find if a directory is a synergy backup folder
-             3. if not - use scp, but only for transferring no more than 5-6GB of data, it takes too much time otherwise
-    */
     executeSh(argc_p, argv_p, "/usr/bin/find /var/backups/synergy/* -type d -ctime -1 -exec scp -r {} 192.168.10.195:/var/backups/synergy_reserve ';'");
     return 0;
 }
@@ -67,6 +67,11 @@ void Performer::executeSh(int argc_p, char *argv_p[], char *stringToExecute){
 int Performer::shutdownSynergy() {
     using std::ifstream;
     using std::ios;
+
+    string str_pidfile;
+    str_pidfile = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
+    const char* cc_pidfile = str_pidfile.c_str();
+
     // prepare to open
     int length;
     char* buffer(0);
@@ -75,7 +80,7 @@ int Performer::shutdownSynergy() {
     // open
     is.exceptions ( ifstream::failbit | ifstream::badbit );                     // exception mask
     try {
-        is.open("/var/run/synergy/arta-synergy-jboss.pid", ios::binary);
+        is.open(cc_pidfile, ios::binary);
     } catch (ifstream::failure) {
         IOError e("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
         throw e;

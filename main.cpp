@@ -6,12 +6,11 @@
 
 int main(int argc, char *argv[]) {
 
-    Performer maintenance;
-    Config cnf;
+    Config* cnf = new Config(argc, argv);
+    Performer maintenance(cnf);
 
     try {
-        cnf.readConfig(argc, argv);
-
+        cnf->readConfig(argc, argv);
         try {
             maintenance.shutdownSynergy();
         }
