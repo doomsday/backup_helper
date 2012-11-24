@@ -17,26 +17,62 @@ Performer::Performer(Config *ptr):
 {}
 
 int Performer::transferBackups(int argc_p, char *argv_p[]){
-    executeSh(argc_p, argv_p, "/usr/bin/find /var/backups/synergy/* -type d -ctime -1 -exec scp -r {} 192.168.10.195:/var/backups/synergy_reserve ';'");
-    return 0;
-}
-int Performer::cleanBackups(int argc_p, char *argv_p[]){
-    executeSh(argc_p, argv_p, "/usr/bin/find /var/backups/synergy/* -type d -ctime +7 -delete");
-    return 0;
-}
-int Performer::sendMail(int argc_p, char *argv_p[]){
-    executeSh(argc_p, argv_p, "echo \"Backups has been (hopefully) made at: $(date).\" | mail -s \"Medicare: Backups has just been made\" -r notificator_medicare@medicare.kz support@arta.kz");
+    // search for config values
+    string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
+    string str_backup_dest_host = pCnf->findConfigParamValue("BACKUP", "backup_dest_host");
+    string str_backup_dest_host_dir = pCnf->findConfigParamValue("BACKUP", "backup_dest_host_dir");
+    // composing string for shell execution
+    string str_execute("/usr/bin/find ");
+    str_execute+=str_backup_source_dir;
+    str_execute+="* -type d -ctime -1 -exec scp -r {} ";
+    str_execute+=str_backup_dest_host;
+    str_execute+=":";
+    str_execute+=str_backup_dest_host_dir;
+    str_execute+=" ';'";
+    // transforming string to c-string as system() call wants it
+    const char* cc_execute = str_execute.c_str();
+    // execution...
+    executeSh(argc_p, argv_p, cc_execute);
     return 0;
 }
 
-void Performer::executeSh(int argc_p, char *argv_p[], char *stringToExecute){
+int Performer::cleanBackups(int argc_p, char *argv_p[]){
+
+    string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
+
+    string str_execute("/usr/bin/find ");
+    str_execute+="/var/backups/synergy/* -type d -ctime +7 -delete";
+
+    const char* cc_execute = str_execute.c_str();
+
+    executeSh(argc_p, argv_p, cc_execute);
+    return 0;
+}
+
+int Performer::sendMail(int argc_p, char *argv_p[]){
+
+    string str_email_from = pCnf->findConfigParamValue("NOTIFICATION", "email_from");
+    string str_email_to = pCnf->findConfigParamValue("NOTIFICATION", "email_to");
+
+    string str_execute("echo \"Backups has been (hopefully) made at: $(date).\" | mail -s \"Medicare: Backups has just been made\" -r ");
+    str_execute+=str_email_from;
+    str_execute+=" ";
+    str_execute+=str_email_to;
+
+    const char* cc_execute = str_execute.c_str();
+
+    executeSh(argc_p, argv_p, cc_execute);
+    return 0;
+}
+
+void Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecute){
 
     pid_t cpid, w;
     int status;
 
     cpid = system(stringToExecute);                                             // /usr/bin/find: `/var/backups/synergy/*': No such file or directory
     if (cpid == -1) {
-        throw ShellExecuteError(strerror(errno));                                  // strerror: Get pointer to error message string
+        throw ShellExecuteError(strerror(errno));                               // strerror: Get pointer to error message string
     }
     if (cpid == 0) {
         std::cout << "Child PID is" << (long)getpid();

@@ -7,7 +7,7 @@
 class Performer
 {
         Config* pCnf;
-        void executeSh(int argc_p, char* argv_p[], char* stringToExecute);
+        void executeSh(int argc_p, char* argv_p[], const char *stringToExecute);
     public:
 //        ~Performs();
         Performer(Config* ptr);
