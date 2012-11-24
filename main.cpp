@@ -1,12 +1,17 @@
-#include <performer.hpp>
-#include <globalexceptions.hpp>
+#include "performer.hpp"
+#include "config.hpp"
+#include "globalexceptions.hpp"
+
 #include <iostream>
 
 int main(int argc, char *argv[]) {
 
     Performer maintenance;
+    Config cnf;
 
     try {
+        cnf.readConfig(argc, argv);
+
         try {
             maintenance.shutdownSynergy();
         }
@@ -26,6 +31,7 @@ int main(int argc, char *argv[]) {
         maintenance.transferBackups(argc, argv);
         maintenance.cleanBackups(argc, argv);
         maintenance.sendMail(argc, argv);
+
     }
     catch (FatalError& e){
         std::cout << e.errorMessage;
