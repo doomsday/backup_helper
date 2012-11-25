@@ -70,66 +70,7 @@ int Performer::sendMail(int argc_p, char *argv_p[]){
     return 0;
 }
 
-/* TODO: Remove usage of argc-argv. It's not necessary
- * 2. Add exceptions */
-void Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecute){
-
-    pid_t cpid, w;
-    int status;
-
-    /* INFO:
-     *
-     * DESCRIPTION
-     * system()  executes  a command specified in command by calling /bin/sh -c command, and returns after the command has been completed.
-     * During execution of the command, SIGCHLD will be blocked, and SIGINT and SIGQUIT will be ignored.
-     *
-     * RETURN VALUE
-     * The value returned is -1 on error (e.g., fork(2) failed), and the return status of the command otherwise.  This latter return
-     * status is in the format specified in wait(2).  Thus, the  exit  code of the command will be WEXITSTATUS(status).  In case
-     * /bin/sh could not be executed, the exit status will be that of a command that does exit(127).
-     *
-     * system() does not affect the wait status of any other children.
-     */
-    cpid = system(stringToExecute);                                             // /usr/bin/find: `/var/backups/synergy/*': No such file or directory
-
-    if ( cpid == -1 ) {
-        throw std::runtime_error(strerror(errno));                               // strerror: Get pointer to error message string
-    }
-    if ( cpid == 0 ) {
-        std::cout << "Email seems to be sent. \"mail\" process PID was " << (long)getpid() << std::endl;
-        exit(EXIT_SUCCESS);
-    } else {                                                                    // got not error but "the return status of the command"
-        do {
-            /* INFO:
-             * The waitpid() system call suspends execution of the calling process until a child specified by pid argument has changed state.
-             * By default, waitpid() waits only for terminated children, but this behavior is modifiable via the options argument.
-             *
-             * WUNTRACED   also return if a child has stopped (but not traced via ptrace(2))
-             * WCONTINUED  also return if a stopped child has been resumed by delivery of SIGCONT
-             */
-
-            w = waitpid(cpid, &status, WUNTRACED | WCONTINUED);                 // waiting the child process to perform requested actions
-            if (w == -1) {
-                throw std::runtime_error(strerror(errno));
-            }
-            /* NOTE:
-             * This macro queries the child termination status provided by the wait() and waitpid() functions, and determines whether the child process ended normally
-             */
-            if (WIFEXITED(status)) {
-                std::cout << "exited, status=" << WEXITSTATUS(status);
-            } else if (WIFSIGNALED(status)) {
-                std::cout << "killed by signal " << WTERMSIG(status);
-            } else if (WIFSTOPPED(status)) {
-                std::cout << "stopped by signal" << WSTOPSIG(status);
-            } else if (WIFCONTINUED(status)) {
-                std::cout << "continued\n";
-            }
-        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-        exit(EXIT_SUCCESS);
-    }
-}
-
-int Performer::shutdownSynergy() {
+int Performer::shutdownSynergy(){
     using std::ifstream;
     using std::ios;
 
@@ -179,6 +120,69 @@ int Performer::shutdownSynergy() {
     is.close();
     delete[] buffer;
     return 0;
+}
+/* TODO: Remove usage of argc-argv. It's not necessary
+ * 2. Add exceptions */
+int Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecute){
+
+    pid_t cpid, w;
+    int status;
+
+    /* INFO:
+     *
+     * DESCRIPTION
+     * system()  executes  a command specified in command by calling /bin/sh -c command, and returns after the command has been completed.
+     * During execution of the command, SIGCHLD will be blocked, and SIGINT and SIGQUIT will be ignored.
+     *
+     * RETURN VALUE
+     * The value returned is -1 on error (e.g., fork(2) failed), and the return status of the command otherwise.  This latter return
+     * status is in the format specified in wait(2).  Thus, the  exit  code of the command will be WEXITSTATUS(status).  In case
+     * /bin/sh could not be executed, the exit status will be that of a command that does exit(127).
+     *
+     * system() does not affect the wait status of any other children.
+     */
+    cpid = system(stringToExecute);                                             // /usr/bin/find: `/var/backups/synergy/*': No such file or directory
+
+    if ( cpid == -1 ) {
+        throw std::runtime_error(strerror(errno));                               // strerror: Get pointer to error message string
+    }
+    if ( cpid == 0 ) {
+        std::cout << "Email seems to be sent. \"mail\" process PID was " << (long)getpid() << std::endl;
+        return(EXIT_SUCCESS);
+    } else {                                                                    // got not error but "the return status of the command"
+        do {
+            /* INFO:
+             * The waitpid() system call suspends execution of the calling process until a child specified by pid argument has changed state.
+             * By default, waitpid() waits only for terminated children, but this behavior is modifiable via the options argument.
+             *
+             * WUNTRACED   also return if a child has stopped (but not traced via ptrace(2))
+             * WCONTINUED  also return if a stopped child has been resumed by delivery of SIGCONT
+             *
+             * The value of pid can be:
+             * < -1   meaning wait for any child process whose process group ID is equal to the absolute value of pid.
+             * -1     meaning wait for any child process.
+             * 0      meaning wait for any child process whose process group ID is equal to that of the calling process.
+             * > 0    meaning wait for the child whose process ID is equal to the value of pid.
+             */
+            w = waitpid(cpid, &status, WUNTRACED | WCONTINUED);                 // waiting the child process to perform requested actions
+            if (w == -1) {
+                throw std::runtime_error(strerror(errno));
+            }
+            /* NOTE:
+             * This macro queries the child termination status provided by the wait() and waitpid() functions, and determines whether the child process ended normally
+             */
+            if (WIFEXITED(status)) {
+                std::cout << "exited, status=" << WEXITSTATUS(status);
+            } else if (WIFSIGNALED(status)) {
+                std::cout << "killed by signal " << WTERMSIG(status);
+            } else if (WIFSTOPPED(status)) {
+                std::cout << "stopped by signal" << WSTOPSIG(status);
+            } else if (WIFCONTINUED(status)) {
+                std::cout << "continued\n";
+            }
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+        return(EXIT_SUCCESS);
+    }
 }
 
 Performer::~Performer(){
