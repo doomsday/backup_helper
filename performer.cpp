@@ -114,7 +114,6 @@ int Performer::shutdownSynergy() {
     string str_pidfile;
     str_pidfile = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
     const char* cc_pidfile = str_pidfile.c_str();
-
     // prepare to open
     int length;
     char* buffer(0);
@@ -139,17 +138,18 @@ int Performer::shutdownSynergy() {
     } catch (ifstream::failure) {
         throw std::runtime_error("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
     }
-    // kill anyway
+
     kill(*buffer, SIGKILL);
     do {    // polling
         sleep (1);
         ++killwait_counter;
         if (killwait_counter >= 120) {
-//            std::cout << "\nCouldn't stop process with KILL signal. Trying to force termination.\n";
-            kill(*buffer, SIGTERM);
-            sleep (5);
-            if (popen("/bin/pidof java", "r")) {
-                throw std::runtime_error("Couldn't force termination!\n");
+            if (pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "1"){
+                kill(*buffer, SIGTERM);
+                sleep (5);
+                if (popen("/bin/pidof java", "r")) {
+                    throw std::runtime_error("Couldn't force termination!\n");
+                }
             }
         }
     } while (!access("/var/run/synergy/arta-synergy-jboss.pid", F_OK));
@@ -158,8 +158,7 @@ int Performer::shutdownSynergy() {
     delete[] buffer;
     return 0;
 }
-/*
-Performs::~Performs(){
-    delete stringToExecute;
+
+Performer::~Performer(){
+    delete pCnf;
 }
-*/

@@ -8,7 +8,7 @@ class Performer
         Config* pCnf;
         void executeSh(int argc_p, char* argv_p[], const char *stringToExecute);
     public:
-//        ~Performs();
+        ~Performer();
         Performer(Config *ptr);
         int transferBackups(int argc_p, char* argv_p[]);
         int cleanBackups(int argc_p, char* argv_p[]);

@@ -5,9 +5,16 @@ REMEMBER:
         IOError e("Can't open requested configuration file\n");
         throw e;
 
-When we throw it:
+2. Throwing the caught exception object using throw e; will cause
+a copy of e to be made. This is not the same as rethrowing the exception
 
-> Created "e" with pointer to character array "errorMessage"
-> Created an unnamed object as the copy of "e" of IOError type, using copy-constructor
-> Called destructor of "e"
-> DESTRUCTED "e" is thrown (I suppose)
+3. Technically, even when you catch an exception by reference, the compiler
+still uses pass by value. This is due to the fact that a catch never
+returns control to the caller, and is thus responsible for clean-up.
+
+
+WHAT'S INTERESTING:
+
+1. Configuration parsers based on boost/spirit
+2. Using of system() call which allows to run shell command in Linux
+3. Using of basic Exceptions concept

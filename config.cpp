@@ -14,14 +14,6 @@ int Config::readConfig(int argc_p, char *argv_p[])
 
     if ( argc_p != 2 )
     {
-        /* INFO:
-         * Throwing the caught exception object using throw e; will cause
-         * a copy of e to be made. This is not the same as rethrowing the exception
-         *
-         * Technically, even when you catch an exception by reference, the compiler
-         * still uses pass by value. This is due to the fact that a catch never
-         * returns control to the caller, and is thus responsible for clean-up.
-         */
         throw std::runtime_error("Sick usage. Try: <file.ini>\n");
     }
 
@@ -33,7 +25,7 @@ int Config::readConfig(int argc_p, char *argv_p[])
 
     vector<string> lns;
     string s;
-    /* INFO:
+    /* NOTE:
      * Конфиг считывается строками до конца, заполняя вектор строк lns
      */
     while ( !in.eof() )
@@ -55,12 +47,12 @@ int Config::readConfig(int argc_p, char *argv_p[])
      */
     lns.erase( remove_if(lns.begin(), lns.end(), is_comment()), lns.end() );
     string text = accumulate( lns.begin(), lns.end(), string() );
-    /* INFO:
+    /* NOTE:
      * Create and initialize our parser
      */
     inidata_parser parser(conf_data);
     BOOST_SPIRIT_DEBUG_NODE(parser);
-    /* INFO:
+    /* NOTE:
      * Теперь запускаем парсер — для этого используется функция parse, которая принимает на вход сам текст, парсер и специальный парсер
      * для пропускаемых символов (скажем, мы хотели бы пропускать все пробелы). В нашем случае парсер для пропускаемых символов будет
      * пустым — nothing_p (т.е. ничего не парсящий). Результатом функции parse является структура parse_info<>
@@ -76,10 +68,7 @@ int Config::readConfig(int argc_p, char *argv_p[])
 string Config::findConfigParamValue(string section, string param)
 {
     string res;
-    /* TEMP:
-     * <file.ini> <section> <parameter>
-     */
     if (find_value(conf_data, section, param, res))
-        return res; // TODO: Replace for our needs
+        return res;
     return 0;
 }

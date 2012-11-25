@@ -10,7 +10,7 @@ class Config
 {
         IniData conf_data;
     public:
-        /* INFO:
+        /* NOTE:
          * Parses conf_data to find <value> of <section> <param>
          */
         Config(int argc_p, char* argv_p[]);
