@@ -3,6 +3,9 @@
 #include <iostream>
 
 FatalError::FatalError(const char *pErrorMessage){
+    /* INFO:
+     * http://stackoverflow.com/questions/13552529/sigabrt-in-destructor-of-an-exception-class
+     */
     char* buf = new char[strlen(pErrorMessage)+1];
     strcpy(buf, pErrorMessage);
     errorMessage = buf;
