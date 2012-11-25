@@ -12,14 +12,18 @@ int Config::readConfig(int argc_p, char *argv_p[])
     using std::string;
     using std::getline;
 
-    if ( argc_p != 2 )
-    {
+    char* pConfLocation = new char[sizeof("./bh.conf")+1];
+
+    if ( argc_p == 1 ){
+        pConfLocation = "./bh.conf";
+    } else if ( argc_p == 2 ){
+        pConfLocation = argv_p[1];
+    } else {
         throw std::runtime_error("Sick usage. Try: <file.ini>\n");
     }
 
-    ifstream in(argv_p[1]);
-    if( !in )
-    {
+    ifstream in(pConfLocation);
+    if( !in ){
         throw std::runtime_error("Can't open requested configuration file\n");
     }
 
@@ -28,8 +32,7 @@ int Config::readConfig(int argc_p, char *argv_p[])
     /* NOTE:
      * Конфиг считывается строками до конца, заполняя вектор строк lns
      */
-    while ( !in.eof() )
-    {
+    while ( !in.eof() ){
         getline( in, s );
         boost::algorithm::trim(s);
         lns.push_back( s+='\n');
@@ -58,8 +61,7 @@ int Config::readConfig(int argc_p, char *argv_p[])
      * пустым — nothing_p (т.е. ничего не парсящий). Результатом функции parse является структура parse_info<>
      */
     parse_info<> info = parse(text.c_str(), parser, nothing_p);
-    if ( !info.hit )
-    {
+    if ( !info.hit ){
         throw std::runtime_error("Error has been detected in configuration file\n");
     }
     return 0; // TODO: Check

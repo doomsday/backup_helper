@@ -12,10 +12,11 @@ int main(int argc, char *argv[]) {
         Config* cnf = new Config(argc, argv);
         Performer maintenance(cnf);
 
+        maintenance.sendMail(argc, argv);
+
         maintenance.shutdownSynergy();
         maintenance.transferBackups(argc, argv);
         maintenance.cleanBackups(argc, argv);
-        maintenance.sendMail(argc, argv);
         delete cnf;
     }
     catch (std::runtime_error& e){
