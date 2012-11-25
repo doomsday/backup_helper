@@ -1,5 +1,4 @@
 #include "config.hpp"
-#include "globalexceptions.hpp"
 
 Config::Config(int argc_p, char* argv_p[]){
     readConfig(argc_p, argv_p);
@@ -23,13 +22,13 @@ int Config::readConfig(int argc_p, char *argv_p[])
          * still uses pass by value. This is due to the fact that a catch never
          * returns control to the caller, and is thus responsible for clean-up.
          */
-        throw FatalError ("Sick usage. Try: <file.ini>\n");
+        throw std::runtime_error("Sick usage. Try: <file.ini>\n");
     }
 
     ifstream in(argv_p[1]);
     if( !in )
     {
-        throw IOError ("Can't open requested configuration file\n");
+        throw std::runtime_error("Can't open requested configuration file\n");
     }
 
     vector<string> lns;
@@ -69,7 +68,7 @@ int Config::readConfig(int argc_p, char *argv_p[])
     parse_info<> info = parse(text.c_str(), parser, nothing_p);
     if ( !info.hit )
     {
-        throw FatalError ("Error has been detected in configuration file\n");
+        throw std::runtime_error("Error has been detected in configuration file\n");
     }
     return 0; // TODO: Check
 }

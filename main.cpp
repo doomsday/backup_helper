@@ -1,6 +1,6 @@
 #include "performer.hpp"
 #include "config.hpp"
-#include "globalexceptions.hpp"
+#include <stdexcept>
 
 #include <iostream>
 
@@ -13,27 +13,14 @@ int main(int argc, char *argv[]) {
     try {
         Config* cnf = new Config(argc, argv);
         Performer maintenance(cnf);
-
-        try {
-            maintenance.shutdownSynergy();
-        }
-        catch (IOError& e) {                                                    // nothing to do
-            throw FatalError (e.errorMessage);
-        }
-        catch (ProcessManagementError &e) {                                     // nothing to do
-            throw FatalError (e.errorMessage);
-        }
-        catch (ShellExecuteError &e){                                           // nothing to do
-            throw FatalError (e.errorMessage);
-        }
-
+        maintenance.shutdownSynergy();
         maintenance.transferBackups(argc, argv);
         maintenance.cleanBackups(argc, argv);
         maintenance.sendMail(argc, argv);
         delete cnf;
     }
-    catch (FatalError& e){
-        std::cout << e.errorMessage;
+    catch (std::runtime_error& e){
+        std::cout << e.what();
         std::cout << "\n2: Fatal Error. Unable to process\n";
         return 1;
     }

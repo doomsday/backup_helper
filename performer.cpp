@@ -79,7 +79,7 @@ void Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecut
 
     cpid = system(stringToExecute);                                             // /usr/bin/find: `/var/backups/synergy/*': No such file or directory
     if (cpid == -1) {
-        throw ShellExecuteError(strerror(errno));                               // strerror: Get pointer to error message string
+        throw std::runtime_error(strerror(errno));                               // strerror: Get pointer to error message string
     }
     if (cpid == 0) {
         std::cout << "Child PID is" << (long)getpid();
@@ -90,7 +90,7 @@ void Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecut
         do {
             w = waitpid(cpid, &status, WUNTRACED | WCONTINUED);                 // waiting the child process to perform requested actions
             if (w == -1) {
-                throw ShellExecuteError(strerror(errno));
+                throw std::runtime_error(strerror(errno));
             }
             if (WIFEXITED(status)) {                                            /* This macro queries the child termination status provided by the wait and waitpid functions,
                                                                                    and determines whether the child process ended normally */
@@ -125,7 +125,7 @@ int Performer::shutdownSynergy() {
     try {
         is.open(cc_pidfile, ios::binary);
     } catch (ifstream::failure) {
-        throw IOError ("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+        throw std::runtime_error("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
     }
     // prepare to read
     is.seekg(0, ios::end);
@@ -137,7 +137,7 @@ int Performer::shutdownSynergy() {
     try {
         is.read(buffer, length);
     } catch (ifstream::failure) {
-        throw IOError ("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+        throw std::runtime_error("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
     }
     // kill anyway
     kill(*buffer, SIGKILL);
@@ -149,7 +149,7 @@ int Performer::shutdownSynergy() {
             kill(*buffer, SIGTERM);
             sleep (5);
             if (popen("/bin/pidof java", "r")) {
-                throw ProcessManagementError ("Couldn't force termination!\n");
+                throw std::runtime_error("Couldn't force termination!\n");
             }
         }
     } while (!access("/var/run/synergy/arta-synergy-jboss.pid", F_OK));

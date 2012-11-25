@@ -1,7 +1,6 @@
 #ifndef PERFORMS_HPP
 #define PERFORMS_HPP
 
-#include "globalexceptions.hpp"
 #include "config.hpp"
 
 class Performer
