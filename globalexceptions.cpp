@@ -2,9 +2,11 @@
 #include <cstring>
 #include <iostream>
 
-FatalError::FatalError(const char *pErrorMessage):
-    errorMessage(pErrorMessage)
-{}
+FatalError::FatalError(const char *pErrorMessage){
+    char* buf = new char[strlen(pErrorMessage)+1];
+    strcpy(buf, pErrorMessage);
+    errorMessage = buf;
+}
 
 FatalError::FatalError(const FatalError& rhs){
     char* buf = new char[strlen(rhs.errorMessage)+1];
