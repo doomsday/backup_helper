@@ -10,7 +10,7 @@ class Performer
         void executeSh(int argc_p, char* argv_p[], const char *stringToExecute);
     public:
 //        ~Performs();
-        Performer(Config* ptr);
+        Performer(Config *ptr);
         int transferBackups(int argc_p, char* argv_p[]);
         int cleanBackups(int argc_p, char* argv_p[]);
         int sendMail(int argc_p, char* argv_p[]);

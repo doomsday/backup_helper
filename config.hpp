@@ -8,14 +8,14 @@ using::std::string;
 
 class Config
 {
-        IniData data;
+        IniData conf_data;
     public:
-        Config(int argc, char *argv[]);
-        int checkConfig();
+        /* INFO:
+         * Parses conf_data to find <value> of <section> <param>
+         */
+        Config(int argc_p, char* argv_p[]);
         int readConfig(int argc_p, char* argv_p[]);
         string findConfigParamValue(string section, string param);
-        int createConfig();
-        int changeConfig();
 };
 
 #endif // CONFIG_HPP

@@ -14,3 +14,6 @@ HEADERS += \
     performer.hpp \
     configparser.hpp
 
+OTHER_FILES += \
+    README.txt
+

@@ -16,6 +16,7 @@ Performer::Performer(Config *ptr):
     pCnf(ptr)
 {}
 
+/* TODO: Add exceptions */
 int Performer::transferBackups(int argc_p, char *argv_p[]){
     // search for config values
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
@@ -36,6 +37,8 @@ int Performer::transferBackups(int argc_p, char *argv_p[]){
     return 0;
 }
 
+/* TODO: 1. Remove usage of argc-argv. It's not necessary
+ * 2. Add exceptions */
 int Performer::cleanBackups(int argc_p, char *argv_p[]){
 
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
@@ -49,6 +52,8 @@ int Performer::cleanBackups(int argc_p, char *argv_p[]){
     return 0;
 }
 
+/* TODO: Remove usage of argc-argv. It's not necessary
+ * 2. Add exceptions */
 int Performer::sendMail(int argc_p, char *argv_p[]){
 
     string str_email_from = pCnf->findConfigParamValue("NOTIFICATION", "email_from");
@@ -65,6 +70,8 @@ int Performer::sendMail(int argc_p, char *argv_p[]){
     return 0;
 }
 
+/* TODO: Remove usage of argc-argv. It's not necessary
+ * 2. Add exceptions */
 void Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecute){
 
     pid_t cpid, w;
@@ -118,8 +125,7 @@ int Performer::shutdownSynergy() {
     try {
         is.open(cc_pidfile, ios::binary);
     } catch (ifstream::failure) {
-        IOError e("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
-        throw e;
+        throw IOError ("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
     }
     // prepare to read
     is.seekg(0, ios::end);
@@ -131,8 +137,7 @@ int Performer::shutdownSynergy() {
     try {
         is.read(buffer, length);
     } catch (ifstream::failure) {
-        IOError e("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
-        throw e;
+        throw IOError ("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
     }
     // kill anyway
     kill(*buffer, SIGKILL);
@@ -144,8 +149,7 @@ int Performer::shutdownSynergy() {
             kill(*buffer, SIGTERM);
             sleep (5);
             if (popen("/bin/pidof java", "r")) {
-                ProcessManagementError e("Couldn't force termination!\n");
-                throw e;
+                throw ProcessManagementError ("Couldn't force termination!\n");
             }
         }
     } while (!access("/var/run/synergy/arta-synergy-jboss.pid", F_OK));

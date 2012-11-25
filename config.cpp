@@ -1,9 +1,8 @@
 #include "config.hpp"
 #include "globalexceptions.hpp"
 
-Config::Config(int argc, char *argv[])
-{
-    readConfig(argc, argv);
+Config::Config(int argc_p, char* argv_p[]){
+    readConfig(argc_p, argv_p);
 }
 
 int Config::readConfig(int argc_p, char *argv_p[])
@@ -16,16 +15,21 @@ int Config::readConfig(int argc_p, char *argv_p[])
 
     if ( argc_p != 2 )
     {
-        FatalError e("Sick usage. Try: <file.ini>\n");
-//        FatalError e("Sick usage. Try: <file.ini> <section> <parameter>\n");
-        throw e;
+        /* INFO:
+         * Throwing the caught exception object using throw e; will cause
+         * a copy of e to be made. This is not the same as rethrowing the exception
+         *
+         * Technically, even when you catch an exception by reference, the compiler
+         * still uses pass by value. This is due to the fact that a catch never
+         * returns control to the caller, and is thus responsible for clean-up.
+         */
+        throw FatalError ("Sick usage. Try: <file.ini>\n");
     }
 
     ifstream in(argv_p[1]);
     if( !in )
     {
-        IOError e("Can't open requested configuration file\n");
-        throw e;
+        throw IOError ("Can't open requested configuration file\n");
     }
 
     vector<string> lns;
@@ -55,7 +59,7 @@ int Config::readConfig(int argc_p, char *argv_p[])
     /* INFO:
      * Create and initialize our parser
      */
-    inidata_parser parser(data);
+    inidata_parser parser(conf_data);
     BOOST_SPIRIT_DEBUG_NODE(parser);
     /* INFO:
      * Теперь запускаем парсер — для этого используется функция parse, которая принимает на вход сам текст, парсер и специальный парсер
@@ -65,8 +69,7 @@ int Config::readConfig(int argc_p, char *argv_p[])
     parse_info<> info = parse(text.c_str(), parser, nothing_p);
     if ( !info.hit )
     {
-        FatalError e("Error has been detected in configuration file\n");
-        throw e;
+        throw FatalError ("Error has been detected in configuration file\n");
     }
     return 0; // TODO: Check
 }
@@ -77,7 +80,7 @@ string Config::findConfigParamValue(string section, string param)
     /* TEMP:
      * <file.ini> <section> <parameter>
      */
-    if (find_value(data, section, param, res))
+    if (find_value(conf_data, section, param, res))
         return res; // TODO: Replace for our needs
     return 0;
 }
