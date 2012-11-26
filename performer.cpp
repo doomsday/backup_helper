@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <errno.h>
+#include <dirent.h>
 #include "performer.hpp"
 
 Performer::Performer(Config *ptr):
@@ -75,6 +76,8 @@ int Performer::sendMail(int argc_p, char *argv_p[]){
 }
 
 int Performer::shutdownSynergy(){
+
+    /* START SECTION [READING PIDFILE] */
     using std::ifstream;
     using std::ios;
 
@@ -84,7 +87,6 @@ int Performer::shutdownSynergy(){
     // prepare to open
     int length;
     char* buffer(0);
-    int killwait_counter;
     ifstream is;
     // open
     is.exceptions ( ifstream::failbit | ifstream::badbit );                     // exception mask
@@ -99,30 +101,67 @@ int Performer::shutdownSynergy(){
     is.seekg(0, ios::beg);
     buffer = new char[length];
     // read
-    is.exceptions ( ifstream::eofbit | ifstream::failbit | ifstream::badbit );                     // exception mask
+    is.exceptions ( ifstream::eofbit | ifstream::failbit | ifstream::badbit );
     try {
         is.read(buffer, length);
     } catch (ifstream::failure) {
         throw std::runtime_error("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
     }
+    /* END SECTION [READING PIDFILE] */
 
-    kill(*buffer, SIGKILL);
-    do {    // polling
-        sleep (1);
-        ++killwait_counter;
-        if (killwait_counter >= 120) {
-            if (pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "1"){
-                kill(*buffer, SIGTERM);
-                sleep (5);
-                if (popen("/bin/pidof java", "r")) {
-                    throw std::runtime_error("Couldn't force termination!\n");
+    /* START SECTION [KILLING] */
+    int killwait_counter;
+    pid_t cpid, kpid;
+    kpid = atoi(buffer);
+
+    cpid = kill(kpid, SIGKILL);
+
+    if ( cpid == -1 ) {
+        throw std::runtime_error(strerror(errno));
+    }
+    if ( cpid == 0 ) {
+        do {
+            sleep (1);
+            ++killwait_counter;
+            /* NOTE:
+             * If prosess isn't going to stop, or pidfile is not going to disappear for any reason,
+             * and bh.conf says we shall try to SIGTERM it.
+             * In this block we shall exit anyway, or infinite loop will happen.
+             */
+            if (killwait_counter >= 120) {
+                if (pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "1"){
+                    cpid = kill(kpid, SIGTERM);
+                    /* NOTE:
+                     * On success (at least one signal was sent), zero is returned.
+                     * On error, -1 is returned, and errno is set appropriately.
+                     */
+                    if ( cpid == -1 ) {
+                        throw std::runtime_error(strerror(errno));
+                    }
+                    // if SIGTERM sent successfully
+                    if ( cpid == 0 ) {
+                        sleep (5);
+                        cpid = procFind("nautilus");
+                        if (cpid = -1) {
+                            throw std::runtime_error("\nCouldn't check if process exists after sending SIGTERM to it\n");
+                        } else {
+                            throw std::runtime_error("\nIt seems that even after SIGTERM the Java VM process is still alive\n");
+                        }
+                    }
+                } else if (pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "0") {
+                    throw std::runtime_error("\nCould not stop process, and according to the bh.conf did not tried to force its termination\n");
+                } else {
+                    throw std::runtime_error("\nInvalid \"term_if_cant_kill\" value\n");
                 }
             }
-        }
-    } while (!access(cc_pidfile, F_OK));
+        } while (!access(cc_pidfile, F_OK));
+    }
+    /* END SECTION [KILLING] */
 
+    /* START SECTION [CLEANING] */
     is.close();
     delete[] buffer;
+    /* END SECTION [CLEANING] */
     return 0;
 }
 /* TODO: Remove usage of argc-argv. It's not necessary
@@ -187,4 +226,47 @@ int Performer::executeSh(const char *stringToExecute){
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         return(EXIT_SUCCESS);
     }
+}
+
+pid_t Performer::procFind(const char* name)
+{
+    DIR* dir;
+    struct dirent* ent;
+    char* endptr;
+    char buf[512];
+
+    if (!(dir = opendir("/proc"))) {
+        perror("can't open /proc");
+        return -1;
+    }
+
+    while((ent = readdir(dir)) != NULL) {
+        /* if endptr is not a null character, the directory is not
+         * entirely numeric, so ignore it */
+        long lpid = strtol(ent->d_name, &endptr, 10);
+        if (*endptr != '\0') {
+            continue;
+        }
+
+        /* try to open the cmdline file */
+        snprintf(buf, sizeof(buf), "/proc/%ld/cmdline", lpid);
+        FILE* fp = fopen(buf, "r");
+
+        if (fp) {
+            if (fgets(buf, sizeof(buf), fp) != NULL) {
+                /* check the first token in the file, the program name */
+                char* first = strtok(buf, " ");
+                if (!strcmp(first, name)) {
+                    fclose(fp);
+                    closedir(dir);
+                    return (pid_t)lpid;
+                }
+            }
+            fclose(fp);
+        }
+
+    }
+
+    closedir(dir);
+    return -1;
 }
