@@ -18,3 +18,12 @@ WHAT'S INTERESTING:
 1. Configuration parsers based on boost/spirit
 2. Using of system() call which allows to run shell command in Linux
 3. Using of basic Exceptions concept
+
+I USED:
+
+1. http://habrahabr.ru/post/50973/
+2. http://habrahabr.ru/post/50976/
+3. http://stackoverflow.com/a/6898456/947501
+4. man
+
+Thanks all authors and thousands of respects to you!

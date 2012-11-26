@@ -10,9 +10,9 @@ class Performer
         pid_t procFind(const char * name);
     public:
         Performer(Config *ptr);
-        int transferBackups(int argc_p, char* argv_p[]);
+        int transferBackups();
         int cleanBackups();
-        int sendMail(int argc_p, char* argv_p[]);
+        int sendMail();
         int shutdownSynergy();
 };
 

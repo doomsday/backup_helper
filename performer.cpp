@@ -18,7 +18,7 @@ Performer::Performer(Config *ptr):
 {}
 
 /* TODO: Add exceptions */
-int Performer::transferBackups(int argc_p, char *argv_p[]){
+int Performer::transferBackups(){
     // search for config values
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_backup_dest_host = pCnf->findConfigParamValue("BACKUP", "backup_dest_host");
@@ -41,8 +41,7 @@ int Performer::transferBackups(int argc_p, char *argv_p[]){
     return 0;
 }
 
-/* TODO: 1. Remove usage of argc-argv. It's not necessary
- * 2. Add exceptions */
+/* TODO: Add exceptions */
 int Performer::cleanBackups(){
 
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
@@ -57,9 +56,8 @@ int Performer::cleanBackups(){
     return 0;
 }
 
-/* TODO: Remove usage of argc-argv. It's not necessary
- * 2. Add exceptions */
-int Performer::sendMail(int argc_p, char *argv_p[]){
+/* TODO: Add exceptions */
+int Performer::sendMail(){
 
     string str_email_from = pCnf->findConfigParamValue("NOTIFICATIONS", "email_from");
     string str_email_to = pCnf->findConfigParamValue("NOTIFICATIONS", "email_to");
@@ -164,8 +162,7 @@ int Performer::shutdownSynergy(){
     /* END SECTION [CLEANING] */
     return 0;
 }
-/* TODO: Remove usage of argc-argv. It's not necessary
- * 2. Add exceptions */
+
 int Performer::executeSh(const char *stringToExecute){
 
     pid_t cpid, w;
