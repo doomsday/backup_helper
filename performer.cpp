@@ -139,9 +139,23 @@ int Performer::shutdownSynergy(){
                     // if SIGTERM sent successfully
                     if ( cpid == 0 ) {
                         sleep (5);
-                        cpid = procFind("nautilus");
+                        cpid = procFind("java");
+                        /* NOTE:
+                         * The return value of procFind is -1 if no processed was found or can't open /proc
+                         * directory. Otherwise the return value is processe's PID
+                         */
                         if (cpid = -1) {
-                            throw std::runtime_error("\nCouldn't check if process exists after sending SIGTERM to it\n");
+                            /* TODO:
+                             * 1. It's possible to more than one Java processes to coexist
+                             * if it is, we will think that we couldn't kill kill it. So it's necessary
+                             * to check existence of process by it's pid that has previously been detected
+                             * 2. Check unlink() results
+                             */
+                            /* NOTE:
+                             * If killed successfully - go away
+                             */
+                            unlink(cc_pidfile);
+                            return 0;
                         } else {
                             throw std::runtime_error("\nIt seems that even after SIGTERM the Java VM process is still alive\n");
                         }

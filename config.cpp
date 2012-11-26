@@ -39,7 +39,7 @@ int Config::readConfig(int argc_p, char *argv_p[])
         boost::algorithm::trim(s);
         lns.push_back( s+='\n');
     }
-    /* REFERENCE:
+    /* NOTE:
      * 1. # iterator erase( iterator start, iterator end )
      *    deletes the elements between start and end (including start but not including end). The return value is the element after the last element erased
      *
