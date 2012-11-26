@@ -6,12 +6,11 @@
 class Performer
 {
         Config* pCnf;
-        int executeSh(int argc_p, char* argv_p[], const char *stringToExecute);
+        int executeSh(const char *stringToExecute);
     public:
-        ~Performer();
         Performer(Config *ptr);
         int transferBackups(int argc_p, char* argv_p[]);
-        int cleanBackups(int argc_p, char* argv_p[]);
+        int cleanBackups();
         int sendMail(int argc_p, char* argv_p[]);
         int shutdownSynergy();
 };

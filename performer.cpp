@@ -22,10 +22,13 @@ int Performer::transferBackups(int argc_p, char *argv_p[]){
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_backup_dest_host = pCnf->findConfigParamValue("BACKUP", "backup_dest_host");
     string str_backup_dest_host_dir = pCnf->findConfigParamValue("BACKUP", "backup_dest_host_dir");
+    string str_backup_dest_user = pCnf->findConfigParamValue("BACKUP", "backup_dest_user");
     // composing string for shell execution
     string str_execute("/usr/bin/find ");
     str_execute+=str_backup_source_dir;
-    str_execute+="* -type d -ctime -1 -exec scp -r {} ";
+    str_execute+="* -type d -ctime -1 -exec scp -qr {} ";
+    str_execute+=str_backup_dest_user;
+    str_execute+='@';
     str_execute+=str_backup_dest_host;
     str_execute+=":";
     str_execute+=str_backup_dest_host_dir;
@@ -33,22 +36,23 @@ int Performer::transferBackups(int argc_p, char *argv_p[]){
     // transforming string to c-string as system() call wants it
     const char* cc_execute = str_execute.c_str();
     // execution...
-    executeSh(argc_p, argv_p, cc_execute);
+    executeSh(cc_execute);
     return 0;
 }
 
 /* TODO: 1. Remove usage of argc-argv. It's not necessary
  * 2. Add exceptions */
-int Performer::cleanBackups(int argc_p, char *argv_p[]){
+int Performer::cleanBackups(){
 
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
 
     string str_execute("/usr/bin/find ");
-    str_execute+="/var/backups/synergy/* -type d -ctime +7 -delete";
+    str_execute+=str_backup_source_dir;
+    str_execute+=" -type d -ctime +7 -delete";
 
     const char* cc_execute = str_execute.c_str();
 
-    executeSh(argc_p, argv_p, cc_execute);
+    executeSh(cc_execute);
     return 0;
 }
 
@@ -59,14 +63,14 @@ int Performer::sendMail(int argc_p, char *argv_p[]){
     string str_email_from = pCnf->findConfigParamValue("NOTIFICATIONS", "email_from");
     string str_email_to = pCnf->findConfigParamValue("NOTIFICATIONS", "email_to");
 
-    string str_execute("echo \"Backups has been (hopefully) made at: $(date).\" | mail -s \"Medicare: Backups has just been made\" ");
+    string str_execute("echo \"This e-mail was sent using HDSH (Help Desk Services Helper) at $(date).\" | mail -s \"E-mail from HDSH\" ");
     str_execute+=str_email_from;
     str_execute+=" -b ";
     str_execute+=str_email_to;
 
     const char* cc_execute = str_execute.c_str();
 
-    executeSh(argc_p, argv_p, cc_execute);
+    executeSh(cc_execute);
     return 0;
 }
 
@@ -115,7 +119,7 @@ int Performer::shutdownSynergy(){
                 }
             }
         }
-    } while (!access("/var/run/synergy/arta-synergy-jboss.pid", F_OK));
+    } while (!access(cc_pidfile, F_OK));
 
     is.close();
     delete[] buffer;
@@ -123,7 +127,7 @@ int Performer::shutdownSynergy(){
 }
 /* TODO: Remove usage of argc-argv. It's not necessary
  * 2. Add exceptions */
-int Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecute){
+int Performer::executeSh(const char *stringToExecute){
 
     pid_t cpid, w;
     int status;
@@ -147,7 +151,7 @@ int Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecute
         throw std::runtime_error(strerror(errno));                               // strerror: Get pointer to error message string
     }
     if ( cpid == 0 ) {
-        std::cout << "Email seems to be sent. \"mail\" process PID was " << (long)getpid() << std::endl;
+        std::cout << "Done. Child process PID was: " << (long)getpid() << std::endl;
         return(EXIT_SUCCESS);
     } else {                                                                    // got not error but "the return status of the command"
         do {
@@ -183,8 +187,4 @@ int Performer::executeSh(int argc_p, char *argv_p[], const char *stringToExecute
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         return(EXIT_SUCCESS);
     }
-}
-
-Performer::~Performer(){
-    delete pCnf;
 }

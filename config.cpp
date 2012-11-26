@@ -19,11 +19,13 @@ int Config::readConfig(int argc_p, char *argv_p[])
     } else if ( argc_p == 2 ){
         pConfLocation = argv_p[1];
     } else {
+//        delete[] pConfLocation;
         throw std::runtime_error("Sick usage. Try: <file.ini>\n");
     }
 
     ifstream in(pConfLocation);
     if( !in ){
+//        delete[] pConfLocation;
         throw std::runtime_error("Can't open requested configuration file\n");
     }
 
@@ -62,8 +64,10 @@ int Config::readConfig(int argc_p, char *argv_p[])
      */
     parse_info<> info = parse(text.c_str(), parser, nothing_p);
     if ( !info.hit ){
+//        delete[] pConfLocation;
         throw std::runtime_error("Error has been detected in configuration file\n");
     }
+//    delete[] pConfLocation;
     return 0; // TODO: Check
 }
 
