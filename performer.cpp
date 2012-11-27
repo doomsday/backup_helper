@@ -77,83 +77,62 @@ int Performer::sendMail(){
 }
 
 int Performer::shutdownSynergy(){
+    /* TODO:
+     * Write to log [ FAIL: Failed to open or read pidfile. Suppose it doesn't exist. Trying to find process automatically ]
+     */
+    bool got_pid_from_pidfile;
+    pid_t kpid;
+    string pidfile_path = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
+    const char* cc_pidfile_path = pidfile_path.c_str();
+    string hardkill_or_not = pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill");
 
-    pid_t cpid, kpid;
-    string pidfile_path;
-
-    pidfile_path = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
-
+    /* NEXT:
+     * Get pid from pidfile or any other possible way
+     */
     try {
         kpid = getIDFromPidfile(pidfile_path);
-    } catch (std::runtime_error& e) {
-        /* TODO:
-         * 1. write to log [ FAIL: Failed to open or read pidfile. Suppose it doesn't exist. Trying to find process automatically ]
-         * 2. Procedure of searching synergy java process
+        got_pid_from_pidfile = 1;
+        /* NEXT:
+         * If pidfile is absent or unaccessible
          */
-    }
-
-    const char* cc_pidfile_path = pidfile_path.c_str();
-
-    cpid = kill(kpid, SIGKILL);
-    /* NOTE:
-     * В случае успеха, возвращается ноль. При ошибке, возвращается -1 и значение errno устанавливается соответствующим образом.
-     */
-    if ( cpid == -1 ) {
-        throw std::runtime_error(strerror(errno));
-    }
-    if ( cpid == 0 ) {
-        int killwait_counter(0);
-        do {
-            sleep (1);
-            ++killwait_counter;
-            /* NOTE:
-             * If prosess isn't going to stop, or pidfile is not going to disappear for any reason,
-             * and bh.conf says we shall try to SIGTERM it.
-             * In this block we shall exit anyway, or infinite loop will happen.
+    } catch (std::logic_error& e) {
+        /* TODO:
+         * Procedure of searching synergy-specific java process
+         */
+        /* NEXT:
+         * If no processes found think synergy is stopped
+         */
+        if ( getPIDByName("java") == -1 ){
+            return 0;
+            /* NEXT:
+             * If PID found lets go to kill it
              */
-            if ( killwait_counter >= 120 ) {
-                if ( pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "1" ) {
-                    cpid = kill( kpid, SIGTERM );
-                    /* NOTE:
-                     * On success (at least one signal was sent), zero is returned.
-                     * On error, -1 is returned, and errno is set appropriately.
-                     */
-                    if ( cpid == -1 ) {
-                        throw std::runtime_error(strerror(errno));
-                    } else if ( cpid == 0 ) {
-                        sleep (5);
-                        cpid = getPIDByName("java");
-                        /* NOTE:
-                         * The return value of procFind is -1 if no processed was found or can't open /proc
-                         * directory. Otherwise the return value is processe's PID
-                         */
-                        if (cpid = -1) {
-                            /* TODO:
-                             * 1. It's possible to more than one Java processes to coexist
-                             * if it is, we will think that we couldn't kill kill it. So it's necessary
-                             * to check existence of process by it's pid that has previously been detected
-                             * 2. Check unlink() results
-                             */
-                            /* NOTE:
-                             * If killed successfully - go away
-                             */
-                            unlink(cc_pidfile_path);
-                            return 0;
-                        } else {
-                            throw std::runtime_error("\nIt seems that even after SIGTERM the Java VM process is still alive\n");
-                        }
-                    } else {
-                        throw std::runtime_error("\nkill() returned impossible value\n");
-                    }
-                } else if ( pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "0" ) {
-                    throw std::runtime_error("\nCould not SIGKILL process, and according to the bh.conf did not tried to SIGTERM it\n");
-                } else {
-                    throw std::runtime_error("\nInvalid \"term_if_cant_kill\" value inf bh.conf\n");
-                }
-            }
-        } while (!access(cc_pidfile_path, F_OK));
+        } else {
+            kpid = getPIDByName("java");
+            got_pid_from_pidfile = 0;
+        }
     }
-
+    /* NEXT:
+     * Suppose we found PID of synergy
+     */
+    try {
+        softKill(kpid, cc_pidfile_path);
+    }
+    catch (runtime_error& e) {
+        /* NEXT:
+         * Failed to send SIGKILL or unable to stop it, don't exactly know why, but anyway lets try to SIGTERM it
+         */
+        if (hardkill_or_not == "1") {
+            hardKill(kpid);
+            if (got_pid_from_pidfile = 1) {
+                unlink(cc_pidfile_path);
+            }
+        } else if ( hardkill_or_not == "0" ) {
+            throw std::runtime_error("\nCould not SIGKILL process, and according to the bh.conf did not tried to SIGTERM it\n");
+        } else {
+            throw std::runtime_error("\nInvalid \"term_if_cant_kill\" value inf bh.conf\n");
+        }
+    }
     return 0;
 }
 
@@ -303,7 +282,7 @@ pid_t Performer::getIDFromPidfile(string pidfile_path){
     try {
         is.open(cc_pidfile_path, ios::binary);
     } catch (ifstream::failure) {
-        throw std::runtime_error("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+        throw std::logic_error("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
     }
     // prepare to read
     is.seekg(0, ios::end);
@@ -315,7 +294,7 @@ pid_t Performer::getIDFromPidfile(string pidfile_path){
     try {
         is.read(buffer, length);
     } catch (ifstream::failure) {
-        throw std::runtime_error("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+        throw std::logic_error("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
     }
     is.close();
 
@@ -337,5 +316,66 @@ bool Performer::getStatusFromPID(const pid_t process_id){
         return 0;
     } else {
         return 1;
+    }
+}
+
+int Performer::softKill(pid_t process_id, const char* cc_pidfile_path){
+    pid_t cpid = kill(process_id, SIGKILL);
+    /* NOTE:
+         * В случае успеха, возвращается ноль. При ошибке, возвращается -1 и значение errno устанавливается соответствующим образом.
+         */
+    if ( cpid == -1 ) {
+        throw std::runtime_error(strerror(errno));
+    }
+    if ( cpid == 0 ) {
+        int killwait_counter(0);
+        do {
+            sleep (1);
+            ++killwait_counter;
+            /* NOTE:
+                 * If prosess isn't going to stop, or pidfile is not going to disappear for any reason,
+                 * and bh.conf says we shall try to SIGTERM it.
+                 * In this block we shall exit anyway, or infinite loop will happen.
+                 */
+            if ( killwait_counter >= 120 ) {
+                throw std::logic_error("\nUnable to stop the process\n");
+            }
+        } while (!access(cc_pidfile_path, F_OK));
+    }
+    return 0;
+}
+
+int Performer::hardKill(pid_t process_id){
+
+    pid_t cpid = kill( process_id, SIGTERM );
+    /* NOTE:
+             * On success (at least one signal was sent), zero is returned.
+             * On error, -1 is returned, and errno is set appropriately.
+             */
+    if ( cpid == -1 ) {
+        throw std::runtime_error(strerror(errno));
+    } else if ( cpid == 0 ) {
+        sleep (5);
+        cpid = getPIDByName("java");
+        /* NOTE:
+                 * The return value of procFind is -1 if no processed was found or can't open /proc
+                 * directory. Otherwise the return value is processe's PID
+                 */
+        if (cpid = -1) {
+            /* TODO:
+                     * 1. It's possible to more than one Java processes to coexist
+                     * if it is, we will think that we couldn't kill kill it. So it's necessary
+                     * to check existence of process by it's pid that has previously been detected
+                     * 2. Check unlink() results
+                     */
+            /* NOTE:
+                     * If killed successfully - go away
+             */
+            return 0;
+        } else {
+            throw std::runtime_error("\nIt seems that even after SIGTERM the Java VM process is still alive\n");
+        }
+    } else {
+        throw std::runtime_error("\nkill() returned impossible value\n");
     }
 }
