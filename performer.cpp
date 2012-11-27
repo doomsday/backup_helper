@@ -80,7 +80,7 @@ int Performer::shutdownSynergy(){
     /* TODO:
      * Write to log [ FAIL: Failed to open or read pidfile. Suppose it doesn't exist. Trying to find process automatically ]
      */
-    bool got_pid_from_pidfile;
+    bool is_pid_from_pidfile;
     pid_t kpid;
     string pidfile_path = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
     const char* cc_pidfile_path = pidfile_path.c_str();
@@ -91,9 +91,9 @@ int Performer::shutdownSynergy(){
      */
     try {
         kpid = getIDFromPidfile(pidfile_path);
-        got_pid_from_pidfile = 1;
+        is_pid_from_pidfile = 1;
         /* NEXT:
-         * If pidfile is absent or unaccessible
+         * If pidfile is absent or unaccessible try other method(s)
          */
     } catch (std::logic_error& e) {
         /* TODO:
@@ -109,7 +109,7 @@ int Performer::shutdownSynergy(){
              */
         } else {
             kpid = getPIDByName("java");
-            got_pid_from_pidfile = 0;
+            is_pid_from_pidfile = 0;
         }
     }
     /* NEXT:
@@ -123,8 +123,12 @@ int Performer::shutdownSynergy(){
          * Failed to send SIGKILL or unable to stop it, don't exactly know why, but anyway lets try to SIGTERM it
          */
         if (hardkill_or_not == "1") {
+            /* NEXT:
+             * Run hardkill() and don't catch any exceptions, cause we can do
+             * no more with it here
+             */
             hardKill(kpid);
-            if (got_pid_from_pidfile = 1) {
+            if (is_pid_from_pidfile = 1) {
                 unlink(cc_pidfile_path);
             }
         } else if ( hardkill_or_not == "0" ) {
