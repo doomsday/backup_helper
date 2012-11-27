@@ -128,7 +128,7 @@ int Performer::shutdownSynergy(){
              * no more with it here
              */
             hardKill(kpid);
-            if (is_pid_from_pidfile = 1) {
+            if (is_pid_from_pidfile == 1) {
                 unlink(cc_pidfile_path);
             }
         } else if ( hardkill_or_not == "0" ) {
@@ -365,7 +365,7 @@ int Performer::hardKill(pid_t process_id){
                  * The return value of procFind is -1 if no processed was found or can't open /proc
                  * directory. Otherwise the return value is processe's PID
                  */
-        if (cpid = -1) {
+        if (cpid == -1) {
             /* TODO:
                      * 1. It's possible to more than one Java processes to coexist
                      * if it is, we will think that we couldn't kill kill it. So it's necessary
