@@ -12,7 +12,6 @@ int main(int argc, char *argv[]) {
         Config* cnf = new Config(argc, argv);
         Performer maintenance(cnf);
 
-
         maintenance.shutdownSynergy();
 //        maintenance.transferBackups(argc, argv);
 //        maintenance.sendMail(argc, argv);

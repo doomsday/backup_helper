@@ -11,6 +11,9 @@
 #include <cstring>
 #include <errno.h>
 #include <dirent.h>
+#include <string>
+#include <boost/lexical_cast.hpp>
+
 #include "performer.hpp"
 
 Performer::Performer(Config *ptr):
@@ -75,49 +78,31 @@ int Performer::sendMail(){
 
 int Performer::shutdownSynergy(){
 
-    /* START SECTION [READING PIDFILE] */
-    using std::ifstream;
-    using std::ios;
-
-    string str_pidfile;
-    str_pidfile = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
-    const char* cc_pidfile = str_pidfile.c_str();
-    // prepare to open
-    int length;
-    char* buffer(0);
-    ifstream is;
-    // open
-    is.exceptions ( ifstream::failbit | ifstream::badbit );                     // exception mask
-    try {
-        is.open(cc_pidfile, ios::binary);
-    } catch (ifstream::failure) {
-        throw std::runtime_error("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
-    }
-    // prepare to read
-    is.seekg(0, ios::end);
-    length = is.tellg();
-    is.seekg(0, ios::beg);
-    buffer = new char[length];
-    // read
-    is.exceptions ( ifstream::eofbit | ifstream::failbit | ifstream::badbit );
-    try {
-        is.read(buffer, length);
-    } catch (ifstream::failure) {
-        throw std::runtime_error("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
-    }
-    /* END SECTION [READING PIDFILE] */
-
-    /* START SECTION [KILLING] */
-    int killwait_counter;
     pid_t cpid, kpid;
-    kpid = atoi(buffer);
+    string pidfile_path;
+
+    pidfile_path = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
+
+    try {
+        kpid = getIDFromPidfile(pidfile_path);
+    } catch (std::runtime_error& e) {
+        /* TODO:
+         * 1. write to log [ FAIL: Failed to open or read pidfile. Suppose it doesn't exist. Trying to find process automatically ]
+         * 2. Procedure of searching synergy java process
+         */
+    }
+
+    const char* cc_pidfile_path = pidfile_path.c_str();
 
     cpid = kill(kpid, SIGKILL);
-
+    /* NOTE:
+     * В случае успеха, возвращается ноль. При ошибке, возвращается -1 и значение errno устанавливается соответствующим образом.
+     */
     if ( cpid == -1 ) {
         throw std::runtime_error(strerror(errno));
     }
     if ( cpid == 0 ) {
+        int killwait_counter(0);
         do {
             sleep (1);
             ++killwait_counter;
@@ -126,20 +111,18 @@ int Performer::shutdownSynergy(){
              * and bh.conf says we shall try to SIGTERM it.
              * In this block we shall exit anyway, or infinite loop will happen.
              */
-            if (killwait_counter >= 120) {
-                if (pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "1"){
-                    cpid = kill(kpid, SIGTERM);
+            if ( killwait_counter >= 120 ) {
+                if ( pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "1" ) {
+                    cpid = kill( kpid, SIGTERM );
                     /* NOTE:
                      * On success (at least one signal was sent), zero is returned.
                      * On error, -1 is returned, and errno is set appropriately.
                      */
                     if ( cpid == -1 ) {
                         throw std::runtime_error(strerror(errno));
-                    }
-                    // if SIGTERM sent successfully
-                    if ( cpid == 0 ) {
+                    } else if ( cpid == 0 ) {
                         sleep (5);
-                        cpid = procFind("java");
+                        cpid = getPIDByName("java");
                         /* NOTE:
                          * The return value of procFind is -1 if no processed was found or can't open /proc
                          * directory. Otherwise the return value is processe's PID
@@ -154,26 +137,23 @@ int Performer::shutdownSynergy(){
                             /* NOTE:
                              * If killed successfully - go away
                              */
-                            unlink(cc_pidfile);
+                            unlink(cc_pidfile_path);
                             return 0;
                         } else {
                             throw std::runtime_error("\nIt seems that even after SIGTERM the Java VM process is still alive\n");
                         }
+                    } else {
+                        throw std::runtime_error("\nkill() returned impossible value\n");
                     }
-                } else if (pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "0") {
-                    throw std::runtime_error("\nCould not stop process, and according to the bh.conf did not tried to force its termination\n");
+                } else if ( pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill") == "0" ) {
+                    throw std::runtime_error("\nCould not SIGKILL process, and according to the bh.conf did not tried to SIGTERM it\n");
                 } else {
-                    throw std::runtime_error("\nInvalid \"term_if_cant_kill\" value\n");
+                    throw std::runtime_error("\nInvalid \"term_if_cant_kill\" value inf bh.conf\n");
                 }
             }
-        } while (!access(cc_pidfile, F_OK));
+        } while (!access(cc_pidfile_path, F_OK));
     }
-    /* END SECTION [KILLING] */
 
-    /* START SECTION [CLEANING] */
-    is.close();
-    delete[] buffer;
-    /* END SECTION [CLEANING] */
     return 0;
 }
 
@@ -239,35 +219,63 @@ int Performer::executeSh(const char *stringToExecute){
     }
 }
 
-pid_t Performer::procFind(const char* name)
+pid_t Performer::getPIDByName(const char* name)
 {
+    /* INFO:
+     * Return values:
+     * "-1" if error or process not found
+     * "PID" otherwise
+     *
+     * DECRIPTION:
+     * Search process' PID using traversal around /proc directory. An alternative could bin using "pidof",
+     * but it's not so interesting and it relies on the external program
+     */
     DIR* dir;
     struct dirent* ent;
     char* endptr;
     char buf[512];
-
-    if (!(dir = opendir("/proc"))) {
+    /* NOTE:
+     * The opendir() function opens a directory stream corresponding to the directory name,
+     * and returns a pointer to the directory stream. The stream is positioned at the first
+     * entry in the directory
+     */
+    if ( !(dir = opendir("/proc")) ) {
         perror("can't open /proc");
         return -1;
     }
-
-    while((ent = readdir(dir)) != NULL) {
-        /* if endptr is not a null character, the directory is not
-         * entirely numeric, so ignore it */
+    /* NOTE:
+     * The  readdir()  function returns a pointer to a dirent structure representing the next
+     * directory entry in the directory stream pointed to by dirp.
+     * It returns NULL on reaching the end of the directory stream or if an error occurred.
+     */
+    while( (ent = readdir(dir)) != NULL ) {
+        /* INFO:
+         * If endptr is not a null character, the directory is not entirely numeric, so ignore it.
+         *
+         * long int strtol(const char *nptr, char **endptr, int base)
+         *
+         * The strtol() function converts the initial part of the string in nptr to a long integer
+         * value according to the given base, which must be between 2 and 36 inclusive, or be the
+         * special value 0
+         *
+         * If endptr is not NULL, strtol() stores the address of the first invalid character in *endptr.
+         * If there were no digits at all, strtol() stores the original  value  of  nptr  in  *endptr
+         * (and returns 0).  In particular, if *nptr is not '\0' but **endptr is '\0' on return, the
+         * entire string is valid
+         */
         long lpid = strtol(ent->d_name, &endptr, 10);
-        if (*endptr != '\0') {
+        if ( *endptr != '\0' ) {
             continue;
         }
-
         /* try to open the cmdline file */
         snprintf(buf, sizeof(buf), "/proc/%ld/cmdline", lpid);
         FILE* fp = fopen(buf, "r");
 
-        if (fp) {
-            if (fgets(buf, sizeof(buf), fp) != NULL) {
+        if ( fp ) {
+            if ( fgets(buf, sizeof(buf), fp ) != NULL) {
                 /* check the first token in the file, the program name */
                 char* first = strtok(buf, " ");
-                if (!strcmp(first, name)) {
+                if ( !strcmp(first, name) ) {
                     fclose(fp);
                     closedir(dir);
                     return (pid_t)lpid;
@@ -275,9 +283,59 @@ pid_t Performer::procFind(const char* name)
             }
             fclose(fp);
         }
-
     }
 
     closedir(dir);
     return -1;
+}
+
+pid_t Performer::getIDFromPidfile(string pidfile_path){
+    using std::ifstream;
+    using std::ios;
+
+    const char* cc_pidfile_path = pidfile_path.c_str();
+    // prepare to open
+    int length;
+    char* buffer(0);
+    ifstream is;
+    // open
+    is.exceptions ( ifstream::failbit | ifstream::badbit );                     // exception mask
+    try {
+        is.open(cc_pidfile_path, ios::binary);
+    } catch (ifstream::failure) {
+        throw std::runtime_error("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+    }
+    // prepare to read
+    is.seekg(0, ios::end);
+    length = is.tellg();
+    is.seekg(0, ios::beg);
+    buffer = new char[length];
+    // read
+    is.exceptions ( ifstream::eofbit | ifstream::failbit | ifstream::badbit );
+    try {
+        is.read(buffer, length);
+    } catch (ifstream::failure) {
+        throw std::runtime_error("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+    }
+    is.close();
+
+    pid_t cpid = atoi(buffer);
+
+    delete[] buffer;
+    return cpid;
+}
+
+bool Performer::getStatusFromPID(const pid_t process_id){
+
+    string proc_path("/proc/");
+    string proc_pid = boost::lexical_cast<string>(process_id);
+
+    proc_path+=proc_pid;
+
+    if ( !(opendir(proc_path.c_str())) ) {
+        perror("can't open /proc");
+        return 0;
+    } else {
+        return 1;
+    }
 }
