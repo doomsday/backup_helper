@@ -10,8 +10,8 @@ class Performer
         pid_t getPIDByName(const char * name);
         pid_t getIDFromPidfile(string pidfile_path);
         bool getStatusFromPID(const pid_t process_id);
-        int softKill(pid_t process_id, const char *cc_pidfile_path);
-        int hardKill(pid_t process_id);
+        int softKill(const pid_t process_id, const char *cc_pidfile_path);
+        int hardKill(const pid_t process_id);
     public:
         Performer(Config *ptr);
         int transferBackups();

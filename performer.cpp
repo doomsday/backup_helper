@@ -83,8 +83,8 @@ int Performer::shutdownSynergy(){
     bool is_pid_from_pidfile;
     pid_t kpid;
     string pidfile_path = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
-    const char* cc_pidfile_path = pidfile_path.c_str();
     string hardkill_or_not = pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill");
+    const char* cc_pidfile_path = pidfile_path.c_str();
 
     /* NEXT:
      * Get pid from pidfile or any other possible way
@@ -99,18 +99,15 @@ int Performer::shutdownSynergy(){
         /* TODO:
          * Procedure of searching synergy-specific java process
          */
-        /* NEXT:
-         * If no processes found think synergy is stopped
+        /* NOTE:
+         * If getPIDByName fails it will throw and exception that will be caught
+         * outside of shutdownSynergy, cause we have nothing to do
          */
-        if ( getPIDByName("java") == -1 ){
-            return 0;
-            /* NEXT:
-             * If PID found lets go to kill it
-             */
-        } else {
-            kpid = getPIDByName("java");
-            is_pid_from_pidfile = 0;
-        }
+        kpid = getPIDByName("java");
+        /* NEXT:
+         * If PID found lets go to kill it
+         */
+        is_pid_from_pidfile = 0;
     }
     /* NEXT:
      * Suppose we found PID of synergy
@@ -222,9 +219,8 @@ pid_t Performer::getPIDByName(const char* name)
      * and returns a pointer to the directory stream. The stream is positioned at the first
      * entry in the directory
      */
-    if ( !(dir = opendir("/proc")) ) {
-        perror("can't open /proc");
-        return -1;
+    if ( (dir = opendir("/proc")) == 0 ) {
+        throw std::runtime_error(strerror(errno));
     }
     /* NOTE:
      * The  readdir()  function returns a pointer to a dirent structure representing the next
@@ -269,7 +265,7 @@ pid_t Performer::getPIDByName(const char* name)
     }
 
     closedir(dir);
-    return -1;
+    throw std::logic_error ("\nUnable to find the process ID(PID). Probably it is not exist.\n");
 }
 
 pid_t Performer::getIDFromPidfile(string pidfile_path){
@@ -323,7 +319,7 @@ bool Performer::getStatusFromPID(const pid_t process_id){
     }
 }
 
-int Performer::softKill(pid_t process_id, const char* cc_pidfile_path){
+int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path){
     pid_t cpid = kill(process_id, SIGKILL);
     /* NOTE:
          * В случае успеха, возвращается ноль. При ошибке, возвращается -1 и значение errno устанавливается соответствующим образом.
@@ -349,7 +345,7 @@ int Performer::softKill(pid_t process_id, const char* cc_pidfile_path){
     return 0;
 }
 
-int Performer::hardKill(pid_t process_id){
+int Performer::hardKill(const pid_t process_id){
 
     pid_t cpid = kill( process_id, SIGTERM );
     /* NOTE:
