@@ -1,5 +1,6 @@
 #include "performer.hpp"
 #include "config.hpp"
+#include "logger.hpp"
 #include <iostream>
 
 int main(int argc, char *argv[]) {
@@ -10,13 +11,17 @@ int main(int argc, char *argv[]) {
          * Read configuration file to use it everywhere in the program later
          */
         Config* cnf = new Config(argc, argv);
-        Performer maintenance(cnf);
+        Logger* lgr = new Logger(cnf);
 
-        maintenance.shutdownSynergy();
+        Performer maintenance(cnf, lgr);
+
+        lgr->logWrite("some");
+//        maintenance.shutdownSynergy();
+//        maintenance.startSynergy();
 //        maintenance.transferBackups(argc, argv);
 //        maintenance.sendMail(argc, argv);
 //        maintenance.cleanBackups();
-        delete[] cnf;
+        delete cnf;
     }
     catch (std::runtime_error& e){
         cout << e.what();

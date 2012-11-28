@@ -16,8 +16,9 @@
 
 #include "performer.hpp"
 
-Performer::Performer(Config *ptr):
-    pCnf(ptr)
+Performer::Performer(Config *ptr, Logger *lgr):
+    pCnf(ptr),
+    pLog(lgr)
 {}
 
 /* TODO: Add exceptions */
@@ -41,6 +42,8 @@ int Performer::transferBackups(){
     const char* cc_execute = str_execute.c_str();
     // execution...
     executeSh(cc_execute);
+
+    delete[] cc_execute;
     return 0;
 }
 
@@ -134,6 +137,16 @@ int Performer::shutdownSynergy(){
             throw std::runtime_error("\nInvalid \"term_if_cant_kill\" value inf bh.conf\n");
         }
     }
+    return 0;
+}
+
+int Performer::startSynergy(){
+    string start_synergy("/etc/init.d/arta-synergy-jboss start");
+    const char* cc_execute = start_synergy.c_str();
+
+    executeSh(cc_execute);
+
+    delete[] cc_execute;
     return 0;
 }
 
