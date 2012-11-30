@@ -1,7 +1,7 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#include "config.hpp";
+#include "config.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -18,7 +18,10 @@ class Logger
         Logger(Config* ptr);
         ~Logger();
 
-        void logWrite(const string record);
+        Logger& operator<< (const string& record);
+        Logger& operator<< (const long& record);
+
+        string date();
 };
 
 #endif // LOGGER_HPP

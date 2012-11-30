@@ -89,10 +89,14 @@ int Performer::shutdownSynergy(){
     string hardkill_or_not = pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill");
     const char* cc_pidfile_path = pidfile_path.c_str();
 
+    *pLog << pLog->date() << "SEVERITY [INFO]: \"synergy_pidfile\" value is " << pidfile_path;
+    *pLog << pLog->date() << "SEVERITY [INFO]: \"term_if_cant_kill\" value is " << hardkill_or_not;
+
     /* NEXT:
      * Get pid from pidfile or any other possible way
      */
     try {
+        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to find PID in PID-file";
         kpid = getIDFromPidfile(pidfile_path);
         is_pid_from_pidfile = 1;
         /* NEXT:
@@ -106,6 +110,8 @@ int Performer::shutdownSynergy(){
          * If getPIDByName fails it will throw and exception that will be caught
          * outside of shutdownSynergy, cause we have nothing to do
          */
+        *pLog << pLog->date() << "SEVERITY [WARNING]: Unable to find PID in PID-file";
+        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to find PID by process name";
         kpid = getPIDByName("java");
         /* NEXT:
          * If PID found lets go to kill it
@@ -116,12 +122,16 @@ int Performer::shutdownSynergy(){
      * Suppose we found PID of synergy
      */
     try {
+        *pLog << pLog->date() << "SEVERITY [INFO]: PID was successfully found";
+        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to send SIGKILL to PID";
         softKill(kpid, cc_pidfile_path);
     }
     catch (runtime_error& e) {
         /* NEXT:
          * Failed to send SIGKILL or unable to stop it, don't exactly know why, but anyway lets try to SIGTERM it
          */
+        *pLog << pLog->date() << "SEVERITY [WARNING]: Unable to SIGKILL process";
+        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to send SIGTERM to PID";
         if (hardkill_or_not == "1") {
             /* NEXT:
              * Run hardkill() and don't catch any exceptions, cause we can do
@@ -129,6 +139,7 @@ int Performer::shutdownSynergy(){
              */
             hardKill(kpid);
             if (is_pid_from_pidfile == 1) {
+                *pLog << pLog->date() << "SEVERITY [INFO]: Removing pidfile";
                 unlink(cc_pidfile_path);
             }
         } else if ( hardkill_or_not == "0" ) {
@@ -144,6 +155,7 @@ int Performer::startSynergy(){
     string start_synergy("/etc/init.d/arta-synergy-jboss start");
     const char* cc_execute = start_synergy.c_str();
 
+    *pLog << pLog->date() << "SEVERITY [INFO]: Starting Synergy";
     executeSh(cc_execute);
 
     delete[] cc_execute;
@@ -174,7 +186,7 @@ int Performer::executeSh(const char *stringToExecute){
         throw std::runtime_error(strerror(errno));                               // strerror: Get pointer to error message string
     }
     if ( cpid == 0 ) {
-        std::cout << "Done. Child process PID was: " << (long)getpid() << std::endl;
+        *pLog << pLog->date() << "SEVERITY [INFO]: Done. Child process PID was:" << (long)getpid();
         return(EXIT_SUCCESS);
     } else {                                                                    // got not error but "the return status of the command"
         do {
@@ -325,7 +337,7 @@ bool Performer::getStatusFromPID(const pid_t process_id){
     proc_path+=proc_pid;
 
     if ( !(opendir(proc_path.c_str())) ) {
-        perror("can't open /proc");
+//        perror("can't open /proc");
         return 0;
     } else {
         return 1;

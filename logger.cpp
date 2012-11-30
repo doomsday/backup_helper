@@ -21,12 +21,32 @@ Logger::~Logger(){
 //    delete pCnf;
 }
 
-void Logger::logWrite(const string record){
+Logger& Logger::operator<< (const string& record) {
+    logfile << record;
+    logfile.flush();
+
+    return *this;
+}
+
+Logger& Logger::operator<< (const long& record) {
+    logfile << record;
+    logfile.flush();
+
+    return *this;
+}
+
+string Logger::date(){
+    /* INFO:
+     * Returns string with newline character at the beginning and space at the end
+     */
     time_t rawtime;
     struct tm* timeinfo;
 
     time(&rawtime);
     timeinfo = localtime(&rawtime);
 
-    logfile << asctime(timeinfo) << record << std::endl;
+    string str_time(asctime(timeinfo));
+    str_time.erase(str_time.end()-1);
+
+    return ( string("\n") += str_time += " " );
 }
