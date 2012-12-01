@@ -22,7 +22,7 @@ Performer::Performer(Config *ptr, Logger *lgr):
 {}
 
 /* TODO: Add exceptions */
-int Performer::transferBackups(){
+int Performer::transferBackups() {
     // search for config values
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_backup_dest_host = pCnf->findConfigParamValue("BACKUP", "backup_dest_host");
@@ -48,7 +48,7 @@ int Performer::transferBackups(){
 }
 
 /* TODO: Add exceptions */
-int Performer::cleanBackups(){
+int Performer::cleanBackups() {
 
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
 
@@ -63,7 +63,7 @@ int Performer::cleanBackups(){
 }
 
 /* TODO: Add exceptions */
-int Performer::sendMail(){
+int Performer::sendMail() {
 
     string str_email_from = pCnf->findConfigParamValue("NOTIFICATIONS", "email_from");
     string str_email_to = pCnf->findConfigParamValue("NOTIFICATIONS", "email_to");
@@ -79,7 +79,7 @@ int Performer::sendMail(){
     return 0;
 }
 
-int Performer::shutdownSynergy(){
+int Performer::shutdownSynergy() {
     /* TODO:
      * Write to log [ FAIL: Failed to open or read pidfile. Suppose it doesn't exist. Trying to find process automatically ]
      */
@@ -102,7 +102,7 @@ int Performer::shutdownSynergy(){
         /* NEXT:
          * If pidfile is absent or unaccessible try other method(s)
          */
-    } catch (std::logic_error& e) {
+    } catch (std::exception& e) {
         /* TODO:
          * Procedure of searching synergy-specific java process
          */
@@ -112,7 +112,7 @@ int Performer::shutdownSynergy(){
          */
         *pLog << pLog->date() << "SEVERITY [WARNING]: Unable to find PID in PID-file";
         *pLog << pLog->date() << "SEVERITY [INFO]: Trying to find PID by process name";
-        kpid = getPIDByName("java");
+            kpid = getPIDByName("java");
         /* NEXT:
          * If PID found lets go to kill it
          */
@@ -126,7 +126,7 @@ int Performer::shutdownSynergy(){
         *pLog << pLog->date() << "SEVERITY [INFO]: Trying to send SIGKILL to PID";
         softKill(kpid, cc_pidfile_path);
     }
-    catch (runtime_error& e) {
+    catch (std::exception& e) {
         /* NEXT:
          * Failed to send SIGKILL or unable to stop it, don't exactly know why, but anyway lets try to SIGTERM it
          */
@@ -137,21 +137,21 @@ int Performer::shutdownSynergy(){
              * Run hardkill() and don't catch any exceptions, cause we can do
              * no more with it here
              */
-            hardKill(kpid);
+                hardKill(kpid);
             if (is_pid_from_pidfile == 1) {
                 *pLog << pLog->date() << "SEVERITY [INFO]: Removing pidfile";
                 unlink(cc_pidfile_path);
             }
         } else if ( hardkill_or_not == "0" ) {
-            throw std::runtime_error("\nCould not SIGKILL process, and according to the bh.conf did not tried to SIGTERM it\n");
+            throw std::runtime_error("Could not SIGKILL process, and according to the bh.conf did not tried to SIGTERM it");
         } else {
-            throw std::runtime_error("\nInvalid \"term_if_cant_kill\" value inf bh.conf\n");
+            throw std::runtime_error("Invalid \"term_if_cant_kill\" value inf bh.conf");
         }
     }
     return 0;
 }
 
-int Performer::startSynergy(){
+int Performer::startSynergy() {
     string start_synergy("/etc/init.d/arta-synergy-jboss start");
     const char* cc_execute = start_synergy.c_str();
 
@@ -162,11 +162,9 @@ int Performer::startSynergy(){
     return 0;
 }
 
-int Performer::executeSh(const char *stringToExecute){
-
+int Performer::executeSh(const char *stringToExecute) {
     pid_t cpid, w;
     int status;
-
     /* INFO:
      *
      * DESCRIPTION
@@ -210,6 +208,7 @@ int Performer::executeSh(const char *stringToExecute){
             /* NOTE:
              * This macro queries the child termination status provided by the wait() and waitpid() functions, and determines whether the child process ended normally
              */
+            /*
             if (WIFEXITED(status)) {
                 std::cout << "exited, status=" << WEXITSTATUS(status);
             } else if (WIFSIGNALED(status)) {
@@ -219,13 +218,13 @@ int Performer::executeSh(const char *stringToExecute){
             } else if (WIFCONTINUED(status)) {
                 std::cout << "continued\n";
             }
+            */
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
         return(EXIT_SUCCESS);
     }
 }
 
-pid_t Performer::getPIDByName(const char* name)
-{
+pid_t Performer::getPIDByName(const char* name) {
     /* INFO:
      * Return values:
      * "-1" if error or process not found
@@ -290,10 +289,10 @@ pid_t Performer::getPIDByName(const char* name)
     }
 
     closedir(dir);
-    throw std::logic_error ("\nUnable to find the process ID(PID). Probably it is not exist.\n");
+    throw std::runtime_error ("Unable to find the process ID(PID). Probably it is not exist");
 }
 
-pid_t Performer::getIDFromPidfile(string pidfile_path){
+pid_t Performer::getIDFromPidfile(string pidfile_path) {
     using std::ifstream;
     using std::ios;
 
@@ -307,7 +306,7 @@ pid_t Performer::getIDFromPidfile(string pidfile_path){
     try {
         is.open(cc_pidfile_path, ios::binary);
     } catch (ifstream::failure) {
-        throw std::logic_error("\n1: The following error has occured: Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+        throw std::runtime_error("Failed to open pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"");
     }
     // prepare to read
     is.seekg(0, ios::end);
@@ -319,7 +318,7 @@ pid_t Performer::getIDFromPidfile(string pidfile_path){
     try {
         is.read(buffer, length);
     } catch (ifstream::failure) {
-        throw std::logic_error("\n1: The following error has occured: Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"\n");
+        throw std::runtime_error("Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"");
     }
     is.close();
 
@@ -363,7 +362,7 @@ int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path){
                  * In this block we shall exit anyway, or infinite loop will happen.
                  */
             if ( killwait_counter >= 120 ) {
-                throw std::logic_error("\nUnable to stop the process\n");
+                throw std::runtime_error("Unable to stop the process");
             }
         } while (!access(cc_pidfile_path, F_OK));
     }
@@ -398,9 +397,9 @@ int Performer::hardKill(const pid_t process_id){
              */
             return 0;
         } else {
-            throw std::runtime_error("\nIt seems that even after SIGTERM the Java VM process is still alive\n");
+            throw std::runtime_error("It seems that even after SIGTERM the Java VM process is still alive");
         }
     } else {
-        throw std::runtime_error("\nkill() returned impossible value\n");
+        throw std::runtime_error("kill() returned impossible value");
     }
 }

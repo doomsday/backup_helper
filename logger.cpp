@@ -10,9 +10,9 @@ Logger::Logger(Config *ptr):
     logfile_path = pCnf->findConfigParamValue("GENERAL", "logfile");
     logfile.exceptions ( ifstream::failbit | ifstream::badbit );
     try {
-        logfile.open(logfile_path, fstream::in | fstream::out | fstream::app);
+        logfile.open(logfile_path.c_str(), fstream::in | fstream::out | fstream::app);
     } catch (fstream::failure) {
-        throw std::logic_error("\nCannot open logfile\n");
+        throw std::runtime_error("\nCannot open logfile\n");
     }
 }
 

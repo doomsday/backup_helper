@@ -12,21 +12,31 @@ int Config::readConfig(int argc_p, char *argv_p[])
     using std::string;
     using std::getline;
 
-    char* pConfLocation = new char[sizeof("./bh.conf")+1];
+    const char* pConfLocation=0;
 
     if ( argc_p == 1 ){
+        pConfLocation = new char[sizeof("./bh.conf")+1];
         pConfLocation = "./bh.conf";
     } else if ( argc_p == 2 ){
+        pConfLocation = new char[sizeof(argv_p[1])+1];
         pConfLocation = argv_p[1];
     } else {
-//        delete[] pConfLocation;
+        //        delete[] pConfLocation;
         throw std::runtime_error("Sick usage. Try: <file.ini>\n");
     }
 
-    ifstream in(pConfLocation);
-    if( !in ){
-//        delete[] pConfLocation;
-        throw std::runtime_error("Can't open requested configuration file\n");
+    ifstream in;
+    try {
+        /* NOTE:
+         * input - reading
+         * output - writing
+         * ifstream	default mode parameter is "ios::in"
+         */
+        in.exceptions ( ifstream::failbit | ifstream::badbit );
+        in.open(pConfLocation);
+    } catch ( ifstream::failure e ) {
+        //        delete[] pConfLocation;
+        throw std::runtime_error("Can't open configuration file\n");
     }
 
     vector<string> lns;
@@ -34,11 +44,28 @@ int Config::readConfig(int argc_p, char *argv_p[])
     /* NOTE:
      * Конфиг считывается строками до конца, заполняя вектор строк lns
      */
-    while ( !in.eof() ){
-        getline( in, s );
-        boost::algorithm::trim(s);
-        lns.push_back( s+='\n');
-    }
+    in.exceptions ( ifstream::failbit | ifstream::badbit | ifstream::eofbit );
+    /* NOTE:
+     * iostream::eof will only be set after reading the end of the stream. It does not indicate, that the
+     * next read will be the end of the stream.
+     * http://stackoverflow.com/questions/5605125/why-is-iostreameof-inside-a-loop-condition-considered-wrong
+     *
+     * eofbit is only set when the last read reached EOF, not if the next read will read only EOF. When the
+     * latter happens, failbit is set at the same time
+     * http://stackoverflow.com/questions/13651054/why-getline-throws-stdios-basefailure-when-exception-mask-is-not-set-to
+     *
+     * eof() returns true if the eofbit stream's error flag has been set by a previous i/o operation
+     * http://www.cplusplus.com/reference/ios/ios/eof/
+     */
+    try {
+        for (;;) {
+            getline( in, s );
+            boost::algorithm::trim(s);
+            lns.push_back( s+='\n');
+        }
+    } catch (ifstream::failure)
+    {}
+
     /* NOTE:
      * 1. # iterator erase( iterator start, iterator end )
      *    deletes the elements between start and end (including start but not including end). The return value is the element after the last element erased
@@ -64,17 +91,20 @@ int Config::readConfig(int argc_p, char *argv_p[])
      */
     parse_info<> info = parse(text.c_str(), parser, nothing_p);
     if ( !info.hit ){
-//        delete[] pConfLocation;
-        throw std::runtime_error("Error has been detected in configuration file\n");
+        //        delete[] pConfLocation;
+        throw std::runtime_error("Error has been detected in configuration file. Please double check it.");
     }
-//    delete[] pConfLocation;
+    //    delete[] pConfLocation;
     return 0; // TODO: Check
 }
 
 string Config::findConfigParamValue(string section, string param)
 {
     string res;
-    if (find_value(conf_data, section, param, res))
+    if (find_value(conf_data, section, param, res)) {
         return res;
+    } else {
+        throw std::runtime_error(string("Unable to find \"") += res += string("\" parameter in configuration file"));
+    }
     return 0;
 }
