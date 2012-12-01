@@ -43,7 +43,7 @@ int Performer::transferBackups() {
     // writing to logfile
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting backups transferring";
     // executing
-    executeSh(cc_execute);
+    shExecute(cc_execute);
 
     //    delete[] cc_execute;
     return 0;
@@ -59,7 +59,7 @@ int Performer::cleanBackups() {
     const char* cc_execute = str_execute.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting cleaning backups";
-    executeSh(cc_execute);
+    shExecute(cc_execute);
     return 0;
 }
 
@@ -76,7 +76,7 @@ int Performer::sendMail() {
 
     const char* cc_execute = str_execute.c_str();
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting send mail";
-    executeSh(cc_execute);
+    shExecute(cc_execute);
     return 0;
 }
 
@@ -157,13 +157,13 @@ int Performer::startSynergy() {
     const char* cc_execute = start_synergy.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting Synergy";
-    executeSh(cc_execute);
+    shExecute(cc_execute);
 
 //    delete[] cc_execute;
     return 0;
 }
 
-int Performer::executeSh(const char *stringToExecute) {
+int Performer::shExecute(const char *stringToExecute) {
     pid_t cpid, w;
     int status;
     /* INFO:
@@ -219,6 +219,7 @@ int Performer::executeSh(const char *stringToExecute) {
                 *pLog << pLog->date() << "SEVERITY [INFO]: Continued";
             }
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+        *pLog << pLog->date() << "SEVERITY [INFO]: Process completed successfully";
         return(EXIT_SUCCESS);
     }
 }

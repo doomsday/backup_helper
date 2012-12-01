@@ -8,7 +8,7 @@ class Performer
 {
         Config* pCnf;
         Logger* pLog;
-        int executeSh(const char *stringToExecute);
+        int shExecute(const char *stringToExecute);
         pid_t getPIDByName(const char * name);
         pid_t getIDFromPidfile(string pidfile_path);
         bool getStatusFromPID(const pid_t process_id);
