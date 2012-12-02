@@ -16,7 +16,7 @@
 
 #include "performer.hpp"
 
-Performer::Performer(Config *ptr, Logger *lgr):
+Performer::Performer(std::shared_ptr<Config> ptr, std::shared_ptr<Logger> lgr):
     pCnf(ptr),
     pLog(lgr)
 {}

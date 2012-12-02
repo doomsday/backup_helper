@@ -2,20 +2,17 @@
 #include "config.hpp"
 #include "logger.hpp"
 #include <iostream>
+#include <memory>
 
 int main(int argc, char *argv[]) {
-    using std::cout;
 
-    Config* cnf=0;
-    Logger* lgr=0;
+    std::shared_ptr<Config> cnf(new Config(argc, argv));
+    std::shared_ptr<Logger> lgr(new Logger(cnf));
 
     try {
         /* NOTE:
          * Read configuration file to use it everywhere in the program later
          */
-        cnf = new Config(argc, argv);
-        lgr = new Logger(cnf);
-
         Performer maintenance(cnf, lgr);
 
         maintenance.shutdownSynergy();
@@ -23,17 +20,13 @@ int main(int argc, char *argv[]) {
 //        maintenance.transferBackups(argc, argv);
 //        maintenance.sendMail(argc, argv);
 //        maintenance.cleanBackups();
-        delete cnf;
-        delete lgr;
     }
-    catch (std::runtime_error& e){
+    catch (std::runtime_error& e) {
+
         *lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
-        cout << "\nFatal Error, unable to process. Exit.\n";
-
-        delete cnf;
-        delete lgr;
-
+        std::cout << "\nFatal Error, unable to process. Exit.\n";
         return 1;
     }
+
     return 0;
 }

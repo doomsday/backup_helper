@@ -11,11 +11,11 @@ using std::ofstream;
 
 class Logger
 {
-        Config* pCnf;
+        std::shared_ptr<Config> pCnf;
         ofstream logfile;
         string logfile_path;
     public:
-        Logger(Config* ptr);
+        Logger(std::shared_ptr<Config> ptr);
         ~Logger();
 
         Logger& operator<< (const string& record);

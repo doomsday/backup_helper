@@ -3,11 +3,12 @@
 
 #include "config.hpp"
 #include "logger.hpp"
+#include <memory>
 
 class Performer
 {
-        Config* pCnf;
-        Logger* pLog;
+        std::shared_ptr<Config> pCnf;
+        std::shared_ptr<Logger> pLog;
         int shExecute(const char *stringToExecute) const;
         pid_t getPIDByName(const char * name) const;
         pid_t getIDFromPidfile(string pidfile_path) const;
@@ -15,7 +16,7 @@ class Performer
         int softKill(const pid_t process_id, const char *cc_pidfile_path) const;
         int hardKill(const pid_t process_id) const;
     public:
-        Performer(Config *ptr, Logger *lgr);
+        Performer(std::shared_ptr<Config> ptr, std::shared_ptr<Logger> lgr);
         int transferBackups() const;
         int cleanBackups() const;
         int sendMail() const;

@@ -4,7 +4,7 @@
 #include <string>
 #include <fstream>
 
-Logger::Logger(Config *ptr):
+Logger::Logger(std::shared_ptr<Config> ptr):
     pCnf(ptr)
 {
     logfile_path = pCnf->findConfigParamValue("GENERAL", "logfile");
