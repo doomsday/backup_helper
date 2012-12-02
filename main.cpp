@@ -29,10 +29,11 @@ int main(int argc, char *argv[]) {
     catch (std::runtime_error& e){
         *lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
         cout << "\nFatal Error, unable to process. Exit.\n";
+
+        delete cnf;
+        delete lgr;
+
         return 1;
     }
-    delete cnf;
-    delete lgr;
-
     return 0;
 }

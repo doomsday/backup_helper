@@ -25,5 +25,6 @@ I USED:
 2. http://habrahabr.ru/post/50976/
 3. http://stackoverflow.com/a/6898456/947501
 4. man
+5. mirat >_<
 
 Thanks all authors and thousands of respects to you!

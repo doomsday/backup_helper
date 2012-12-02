@@ -18,7 +18,6 @@ Logger::Logger(Config *ptr):
 
 Logger::~Logger(){
     logfile.close();
-    delete pCnf;
 }
 
 Logger& Logger::operator<< (const string& record) {
