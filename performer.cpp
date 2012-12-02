@@ -22,7 +22,7 @@ Performer::Performer(Config *ptr, Logger *lgr):
 {}
 
 /* TODO: Add exceptions */
-int Performer::transferBackups() {
+int Performer::transferBackups() const {
     // search for config values
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_backup_dest_host = pCnf->findConfigParamValue("BACKUP", "backup_dest_host");
@@ -50,7 +50,7 @@ int Performer::transferBackups() {
 }
 
 /* TODO: Add exceptions */
-int Performer::cleanBackups() {
+int Performer::cleanBackups() const {
 
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_execute("/usr/bin/find ");
@@ -64,7 +64,7 @@ int Performer::cleanBackups() {
 }
 
 /* TODO: Add exceptions */
-int Performer::sendMail() {
+int Performer::sendMail() const {
 
     string str_email_from = pCnf->findConfigParamValue("NOTIFICATIONS", "email_from");
     string str_email_to = pCnf->findConfigParamValue("NOTIFICATIONS", "email_to");
@@ -80,7 +80,7 @@ int Performer::sendMail() {
     return 0;
 }
 
-int Performer::shutdownSynergy() {
+int Performer::shutdownSynergy() const {
     /* TODO:
      * Write to log [ FAIL: Failed to open or read pidfile. Suppose it doesn't exist. Trying to find process automatically ]
      */
@@ -152,18 +152,18 @@ int Performer::shutdownSynergy() {
     return 0;
 }
 
-int Performer::startSynergy() {
+int Performer::startSynergy() const {
     string start_synergy("/etc/init.d/arta-synergy-jboss start");
     const char* cc_execute = start_synergy.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting Synergy";
     shExecute(cc_execute);
 
-//    delete[] cc_execute;
+    //    delete[] cc_execute;
     return 0;
 }
 
-int Performer::shExecute(const char *stringToExecute) {
+int Performer::shExecute(const char *stringToExecute) const {
     pid_t cpid, w;
     int status;
     /* INFO:
@@ -224,7 +224,7 @@ int Performer::shExecute(const char *stringToExecute) {
     }
 }
 
-pid_t Performer::getPIDByName(const char* name) {
+pid_t Performer::getPIDByName(const char* name) const {
     /* INFO:
      * Return values:
      * "-1" if error or process not found
@@ -294,7 +294,7 @@ pid_t Performer::getPIDByName(const char* name) {
     throw std::runtime_error ("Unable to find the process ID(PID). Probably it is not exist");
 }
 
-pid_t Performer::getIDFromPidfile(string pidfile_path) {
+pid_t Performer::getIDFromPidfile(string pidfile_path) const {
     using std::ifstream;
     using std::ios;
 
@@ -330,7 +330,7 @@ pid_t Performer::getIDFromPidfile(string pidfile_path) {
     return cpid;
 }
 
-bool Performer::getStatusFromPID(const pid_t process_id){
+bool Performer::getStatusFromPID(const pid_t process_id) const{
 
     string proc_path("/proc/");
     string proc_pid = boost::lexical_cast<string>(process_id);
@@ -345,7 +345,7 @@ bool Performer::getStatusFromPID(const pid_t process_id){
     }
 }
 
-int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path){
+int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path) const{
     pid_t cpid = kill(process_id, SIGKILL);
     /* NOTE:
          * В случае успеха, возвращается ноль. При ошибке, возвращается -1 и значение errno устанавливается соответствующим образом.
@@ -371,7 +371,7 @@ int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path){
     return 0;
 }
 
-int Performer::hardKill(const pid_t process_id){
+int Performer::hardKill(const pid_t process_id) const{
 
     pid_t cpid = kill( process_id, SIGTERM );
     /* NOTE:

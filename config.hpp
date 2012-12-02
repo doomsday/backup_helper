@@ -14,8 +14,8 @@ class Config
          * Parses conf_data to find <value> of <section> <param>
          */
         Config(int argc_p, char* argv_p[]);
-        int readConfig(int argc_p, char* argv_p[]);
-        string findConfigParamValue(string section, string param);
+        void readConfig(int argc_p, char* argv_p[]);
+        string findConfigParamValue (string section, string param) const;
 };
 
 #endif // CONFIG_HPP

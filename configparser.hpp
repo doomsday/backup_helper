@@ -31,28 +31,25 @@ struct add_key {
         void operator()(char const* p, char const* q) const;
 };
 
-struct add_value
-{
+struct add_value {
         IniData & data_;
         add_value(IniData & data) : data_(data) {}
         void operator()(char const* p, char const* q) const;
 };
 
-struct inidata_parser : public grammar<inidata_parser>
-{
+struct inidata_parser : public grammar<inidata_parser> {
+
         IniData & data_;
 
         inidata_parser(IniData & data) : data_(data) {}
 
         template <typename ScannerT>
-        struct definition
-        {
+        struct definition {
                 rule<ScannerT> inidata, section, entry, ident, value, stringSpaces, spaces;
 
                 rule<ScannerT> const& start() const { return inidata; }
 
-                definition(inidata_parser const& self)
-                {
+                definition(inidata_parser const& self) {
                     inidata = *section;
 
                     section = ch_p('[')
@@ -82,13 +79,11 @@ struct inidata_parser : public grammar<inidata_parser>
         };
 };
 
-struct is_comment
-{
+struct is_comment {
         bool operator()(string const& s) const;
 };
 
-struct first_is
-{
+struct first_is {
         string const& s_;
         first_is(std::string const& s) : s_(s) {}
         template< class Pair>

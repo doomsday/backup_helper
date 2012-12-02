@@ -18,7 +18,7 @@ Logger::Logger(Config *ptr):
 
 Logger::~Logger(){
     logfile.close();
-//    delete pCnf;
+    delete pCnf;
 }
 
 Logger& Logger::operator<< (const string& record) {
@@ -35,7 +35,7 @@ Logger& Logger::operator<< (const long& record) {
     return *this;
 }
 
-string Logger::date(){
+string Logger::date() const{
     /* INFO:
      * Returns string with newline character at the beginning and space at the end
      */

@@ -21,7 +21,7 @@ class Logger
         Logger& operator<< (const string& record);
         Logger& operator<< (const long& record);
 
-        string date();
+        string date() const;
 };
 
 #endif // LOGGER_HPP

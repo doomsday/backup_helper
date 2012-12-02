@@ -4,7 +4,7 @@ Config::Config(int argc_p, char* argv_p[]){
     readConfig(argc_p, argv_p);
 }
 
-int Config::readConfig(int argc_p, char *argv_p[])
+void Config::readConfig(int argc_p, char *argv_p[])
 {
     using std::cout;
     using std::ifstream;
@@ -15,14 +15,11 @@ int Config::readConfig(int argc_p, char *argv_p[])
     const char* pConfLocation=0;
 
     if ( argc_p == 1 ){
-        pConfLocation = new char[sizeof("./bh.conf")+1];
         pConfLocation = "./bh.conf";
     } else if ( argc_p == 2 ){
-        pConfLocation = new char[sizeof(argv_p[1])+1];
         pConfLocation = argv_p[1];
     } else {
-        //        delete[] pConfLocation;
-        throw std::runtime_error("Sick usage. Try: <file.ini>\n");
+        throw std::runtime_error("Sick usage. Try: <file.conf>\n");
     }
 
     ifstream in;
@@ -35,7 +32,6 @@ int Config::readConfig(int argc_p, char *argv_p[])
         in.exceptions ( ifstream::failbit | ifstream::badbit );
         in.open(pConfLocation);
     } catch ( ifstream::failure e ) {
-        //        delete[] pConfLocation;
         throw std::runtime_error("Can't open configuration file\n");
     }
 
@@ -65,7 +61,6 @@ int Config::readConfig(int argc_p, char *argv_p[])
         }
     } catch (ifstream::failure)
     {}
-
     /* NOTE:
      * 1. # iterator erase( iterator start, iterator end )
      *    deletes the elements between start and end (including start but not including end). The return value is the element after the last element erased
@@ -91,14 +86,11 @@ int Config::readConfig(int argc_p, char *argv_p[])
      */
     parse_info<> info = parse(text.c_str(), parser, nothing_p);
     if ( !info.hit ){
-        //        delete[] pConfLocation;
         throw std::runtime_error("Error has been detected in configuration file. Please double check it.");
     }
-    //    delete[] pConfLocation;
-    return 0; // TODO: Check
 }
 
-string Config::findConfigParamValue(string section, string param)
+string Config::findConfigParamValue(string section, string param) const
 {
     string res;
     if (find_value(conf_data, section, param, res)) {
