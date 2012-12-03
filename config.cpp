@@ -1,11 +1,10 @@
 #include "config.hpp"
 
-Config::Config(int argc_p, char* argv_p[]){
+Config::Config(int argc_p, char* argv_p[]) {
     readConfig(argc_p, argv_p);
 }
 
-void Config::readConfig(int argc_p, char *argv_p[])
-{
+void Config::readConfig(int argc_p, char *argv_p[]) {
     using std::cout;
     using std::ifstream;
     using std::vector;
@@ -14,9 +13,9 @@ void Config::readConfig(int argc_p, char *argv_p[])
 
     const char* pConfLocation=0;
 
-    if ( argc_p == 1 ){
+    if ( argc_p == 1 ) {
         pConfLocation = "./bh.conf";
-    } else if ( argc_p == 2 ){
+    } else if ( argc_p == 2 ) {
         pConfLocation = argv_p[1];
     } else {
         throw std::runtime_error("Sick usage. Try: <file.conf>\n");
@@ -85,13 +84,12 @@ void Config::readConfig(int argc_p, char *argv_p[])
      * пустым — nothing_p (т.е. ничего не парсящий). Результатом функции parse является структура parse_info<>
      */
     parse_info<> info = parse(text.c_str(), parser, nothing_p);
-    if ( !info.hit ){
+    if ( !info.hit ) {
         throw std::runtime_error("Error has been detected in configuration file. Please double check it.");
     }
 }
 
-string Config::findConfigParamValue(string section, string param) const
-{
+string Config::findConfigParamValue(string section, string param) const {
     string res;
     if (find_value(conf_data, section, param, res)) {
         return res;

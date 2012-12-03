@@ -16,7 +16,7 @@ Logger::Logger(std::shared_ptr<Config> ptr):
     }
 }
 
-Logger::~Logger(){
+Logger::~Logger() {
     logfile.close();
 }
 
@@ -34,7 +34,7 @@ Logger& Logger::operator<< (const long& record) {
     return *this;
 }
 
-string Logger::date() const{
+string Logger::date() const {
     /* INFO:
      * Returns string with newline character at the beginning and space at the end
      */

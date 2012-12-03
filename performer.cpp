@@ -45,7 +45,6 @@ int Performer::transferBackups() const {
     // executing
     shExecute(cc_execute);
 
-    //    delete[] cc_execute;
     return 0;
 }
 
@@ -159,7 +158,6 @@ int Performer::startSynergy() const {
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting Synergy";
     shExecute(cc_execute);
 
-    //    delete[] cc_execute;
     return 0;
 }
 
@@ -335,7 +333,7 @@ pid_t Performer::getIDFromPidfile(string pidfile_path) const {
     return cpid;
 }
 
-bool Performer::getStatusFromPID(const pid_t process_id) const{
+bool Performer::getStatusFromPID(const pid_t process_id) const {
 
     string proc_path("/proc/");
     string proc_pid = boost::lexical_cast<string>(process_id);
@@ -350,7 +348,7 @@ bool Performer::getStatusFromPID(const pid_t process_id) const{
     }
 }
 
-int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path) const{
+int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path) const {
     pid_t cpid = kill(process_id, SIGKILL);
     /* NOTE:
          * В случае успеха, возвращается ноль. При ошибке, возвращается -1 и значение errno устанавливается соответствующим образом.
@@ -376,7 +374,7 @@ int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path) con
     return 0;
 }
 
-int Performer::hardKill(const pid_t process_id) const{
+int Performer::hardKill(const pid_t process_id) const {
 
     pid_t cpid = kill( process_id, SIGTERM );
     /* NOTE:

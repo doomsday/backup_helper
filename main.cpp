@@ -10,26 +10,21 @@ int main(int argc, char *argv[]) {
         /* NOTE:
          * Read configuration file to use it everywhere in the program later
          */
-
         std::shared_ptr<Config> cnf(new Config(argc, argv));
         std::shared_ptr<Logger> lgr(new Logger(cnf));
-
         Performer maintenance(cnf, lgr);
 
         maintenance.shutdownSynergy();
-//        maintenance.startSynergy();
-//        maintenance.transferBackups(argc, argv);
-//        maintenance.sendMail(argc, argv);
-//        maintenance.cleanBackups();
+        maintenance.transferBackups(argc, argv);
+        maintenance.cleanBackups();
+        maintenance.startSynergy();
+        maintenance.sendMail(argc, argv);
     }
     catch (std::runtime_error& e) {
-
         //*lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
-
         std::cout << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
         std::cout << "\nFatal Error, unable to process. Exit.\n";
         return 1;
     }
-
     return 0;
 }

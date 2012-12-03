@@ -9,8 +9,7 @@
 using std::string;
 using std::ofstream;
 
-class Logger
-{
+class Logger {
         std::shared_ptr<Config> pCnf;
         ofstream logfile;
         string logfile_path;
