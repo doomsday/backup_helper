@@ -32,7 +32,7 @@ void Config::readConfig(int argc_p, char *argv_p[])
         in.exceptions ( ifstream::failbit | ifstream::badbit );
         in.open(pConfLocation);
     } catch ( ifstream::failure e ) {
-        throw std::runtime_error("Can't open configuration file\n");
+        throw std::runtime_error("Can't open configuration file");
     }
 
     vector<string> lns;

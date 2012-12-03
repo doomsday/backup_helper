@@ -301,7 +301,6 @@ pid_t Performer::getIDFromPidfile(string pidfile_path) const {
     const char* cc_pidfile_path = pidfile_path.c_str();
     // prepare to open
     int length;
-    char* buffer(0);
     ifstream is;
     // open
     is.exceptions ( ifstream::failbit | ifstream::badbit );                     // exception mask
@@ -314,19 +313,25 @@ pid_t Performer::getIDFromPidfile(string pidfile_path) const {
     is.seekg(0, ios::end);
     length = is.tellg();
     is.seekg(0, ios::beg);
-    buffer = new char[length];
-    // read
+
+    std::shared_ptr<char> buffer(new char[length]);
     is.exceptions ( ifstream::eofbit | ifstream::failbit | ifstream::badbit );
     try {
-        is.read(buffer, length);
+        /* NOTE:
+         * Smart pointers usually provide a way to access their raw pointer directly.
+         * STL smart pointers have a get member function for this purpose, and
+         * CComPtr has a public p class member. By providing direct access to the
+         * underlying pointer, you can use the smart pointer to manage memory in
+         * your own code and still pass the raw pointer to code that does not support smart pointers
+         */
+        is.read(buffer.get(), length);
     } catch (ifstream::failure) {
         throw std::runtime_error("Failed to read pidfile \"/var/run/synergy/arta-synergy-jboss.pid\"");
     }
     is.close();
 
-    pid_t cpid = atoi(buffer);
+    pid_t cpid = atoi(buffer.get());
 
-    delete[] buffer;
     return cpid;
 }
 
