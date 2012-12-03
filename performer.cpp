@@ -319,7 +319,7 @@ pid_t Performer::getIDFromPidfile(string pidfile_path) const {
     try {
         /* NOTE:
          * Smart pointers usually provide a way to access their raw pointer directly.
-         * STL smart pointers have a get member function for this purpose, and
+         * STL smart pointers have a get() member function for this purpose, and
          * CComPtr has a public p class member. By providing direct access to the
          * underlying pointer, you can use the smart pointer to manage memory in
          * your own code and still pass the raw pointer to code that does not support smart pointers

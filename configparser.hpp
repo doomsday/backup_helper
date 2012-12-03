@@ -8,11 +8,11 @@
 #include <vector>
 #include <string>
 
-#include <boost/spirit.hpp>
+#include <boost/spirit/include/classic.hpp>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
-using namespace boost::spirit;
+using namespace boost::spirit::classic;
 
 typedef pair<string, string>    Entry;      // САМА ЗАПИСЬ
 typedef list<Entry>             Entries;    // Список записей
@@ -37,7 +37,7 @@ struct add_value {
         void operator()(char const* p, char const* q) const;
 };
 
-struct inidata_parser : public grammar<inidata_parser> {
+struct inidata_parser : public grammar <inidata_parser> {
 
         IniData & data_;
 
