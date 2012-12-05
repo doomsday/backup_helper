@@ -17,10 +17,10 @@ int main(int argc, char *argv[]) {
         Performer maintenance(cnf, lgr);
 
         maintenance.shutdownSynergy();
-        maintenance.transferBackups(argc, argv);
+//        maintenance.transferBackups();
         maintenance.cleanBackups();
         maintenance.startSynergy();
-        maintenance.sendMail(argc, argv);
+//        maintenance.sendMail();
     }
     catch (std::runtime_error& e) {
         //*lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
@@ -29,5 +29,4 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     return 0;
-    // not testing
 }
