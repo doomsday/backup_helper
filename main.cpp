@@ -4,6 +4,8 @@
 #include <iostream>
 #include <memory>
 
+#define BH_TESTING
+
 int main(int argc, char *argv[]) {
 
     try {
@@ -27,5 +29,4 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     return 0;
-    // testing
 }
