@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <string>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "performer.hpp"
 
@@ -223,20 +224,26 @@ int Performer::shExecute(const char* stringToExecute) const {
 }
 
 int Performer::shExecuteExperimental(const char* stringToExecute) const {
+
+    namespace ba = boost::algorithm;
+
+    string s(stringToExecute);
+    vector<string> fields;
+    ba::split(fields, s, ba::is_any_of(" "));
+
+    const char* argumentsArray[fields.size()];
+
+    for (unsigned int i = 0; i < fields.size(); ++i) {
+        /* NOTE:
+         * We need whitespace at the end of any argument, but boost::split erased it of course
+         * so lest restore
+         */
+        fields[i] = fields[i]+=" ";
+        argumentsArray[i] = fields[i].c_str();
+    }
+
     pid_t child_pid, w;
     int status;
-
-    vector<string> cmd_arguments;
-    stringstream cmd_line(stringToExecute);
-    string cmd_token;
-
-    while (getline(cmd_line, cmd_token, ' '))
-        cmd_arguments.push_back(cmd_token+=" ");
-
-    const char* argumentsArray[cmd_arguments.size()];
-    for (unsigned int i = 0; i < cmd_arguments.size(); ++i) {
-        argumentsArray[i] = cmd_arguments[i].c_str();
-    }
 
     child_pid = fork();
 
