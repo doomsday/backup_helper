@@ -58,7 +58,7 @@ int Performer::cleanBackups() const {
     const char* cc_execute = str_execute.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting cleaning backups";
-    shExecute(cc_execute);
+    shExecuteExperimental(cc_execute);
     return 0;
 }
 
@@ -225,20 +225,19 @@ int Performer::shExecute(const char* stringToExecute) const {
 int Performer::shExecuteExperimental(const char* stringToExecute) const {
     pid_t child_pid, w;
     int status;
-    parsecmd(stringToExecute,argv);
-    /* INFO:
-     *
-     * DESCRIPTION
-     * system()  executes  a command specified in command by calling /bin/sh -c command, and returns after the command has been completed.
-     * During execution of the command, SIGCHLD will be blocked, and SIGINT and SIGQUIT will be ignored.
-     *
-     * RETURN VALUE
-     * The value returned is -1 on error (e.g., fork(2) failed), and the return status of the command otherwise.  This latter return
-     * status is in the format specified in wait(2).  Thus, the  exit  code of the command will be WEXITSTATUS(status).  In case
-     * /bin/sh could not be executed, the exit status will be that of a command that does exit(127).
-     *
-     * system() does not affect the wait status of any other children.
-     */
+
+    vector<string> cmd_arguments;
+    stringstream cmd_line(stringToExecute);
+    string cmd_token;
+
+    while (getline(cmd_line, cmd_token, ' '))
+        cmd_arguments.push_back(cmd_token+=" ");
+
+    const char* argumentsArray[cmd_arguments.size()];
+    for (unsigned int i = 0; i < cmd_arguments.size(); ++i) {
+        argumentsArray[i] = cmd_arguments[i].c_str();
+    }
+
     child_pid = fork();
 
     if ( child_pid == 0 ) {
