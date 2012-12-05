@@ -4,6 +4,8 @@
 #include <iostream>
 #include <memory>
 
+#define BH_MASTER
+
 int main(int argc, char *argv[]) {
 
     try {
