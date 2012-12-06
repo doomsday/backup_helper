@@ -17,8 +17,8 @@ int main(int argc, char *argv[]) {
         Performer maintenance(cnf, lgr);
 
 //        maintenance.shutdownSynergy();
-//        maintenance.transferBackups();
-        maintenance.cleanBackups();
+        maintenance.transferBackups();
+//        maintenance.cleanBackups();
 //        maintenance.startSynergy();
 //        maintenance.sendMail();
     }

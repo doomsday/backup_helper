@@ -32,19 +32,20 @@ int Performer::transferBackups() const {
     // composing string for shell execution
     string str_execute("/usr/bin/find ");
     str_execute+=str_backup_source_dir;
-    str_execute+="* -type d -ctime -1 -exec scp -qr {} ";
+    str_execute+="/*";
+    str_execute+=" -type d -ctime -1 -exec scp -qr {} ";
     str_execute+=str_backup_dest_user;
     str_execute+='@';
     str_execute+=str_backup_dest_host;
     str_execute+=":";
     str_execute+=str_backup_dest_host_dir;
-    str_execute+=" ';'";
+    str_execute+="/{} ;";
     // transforming string to c-string as system() call wants it
     const char* cc_execute = str_execute.c_str();
     // writing to logfile
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting backups transferring";
     // executing
-    shExecute(cc_execute);
+    shExecuteExperimental(cc_execute);
 
     return 0;
 }
@@ -55,7 +56,7 @@ int Performer::cleanBackups() const {
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_execute("/usr/bin/find ");
     str_execute+=str_backup_source_dir;
-    str_execute+=" -type d -ctime +7 -delete";
+    str_execute+=" -type d -ctime +30 -exec rm {} ;";
     const char* cc_execute = str_execute.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting cleaning backups";
@@ -157,7 +158,7 @@ int Performer::startSynergy() const {
     const char* cc_execute = start_synergy.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting Synergy";
-    shExecute(cc_execute);
+    shExecuteExperimental(cc_execute);
 
     return 0;
 }
@@ -231,7 +232,7 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
     vector<string> fields;
     ba::split(fields, s, ba::is_any_of(" "));
 
-    const char* argumentsArray[fields.size()];
+    const char* argumentsArray[fields.size()+1];
 
     for (unsigned int i = 0; i < fields.size(); ++i) {
         /* NOTE:
@@ -240,6 +241,8 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
          */
         argumentsArray[i] = fields[i].c_str();
     }
+
+    argumentsArray[fields.size()] = NULL;
 
     pid_t child_pid, w;
     int status;
