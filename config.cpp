@@ -94,6 +94,6 @@ string Config::findConfigParamValue(string section, string param) const {
     if (find_value(conf_data, section, param, res)) {
         return res;
     } else {
-        throw std::runtime_error(string("Unable to find \"") += res += string("\" parameter in configuration file"));
+        throw std::runtime_error(string("Unable to find \"") += param += string("\" parameter in configuration file"));
     }
 }

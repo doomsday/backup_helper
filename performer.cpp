@@ -238,7 +238,6 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
          * We need whitespace at the end of any argument, but boost::split erased it of course
          * so lest restore
          */
-        fields[i] = fields[i]+=" ";
         argumentsArray[i] = fields[i].c_str();
     }
 
