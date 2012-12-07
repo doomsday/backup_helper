@@ -16,11 +16,11 @@ int main(int argc, char *argv[]) {
         std::shared_ptr<Logger> lgr(new Logger(cnf));
         Performer maintenance(cnf, lgr);
 
-        maintenance.shutdownSynergy();
+//        maintenance.shutdownSynergy();
         maintenance.transferBackups();
-        maintenance.cleanBackups();
-        maintenance.startSynergy();
-        maintenance.sendMail();
+//        maintenance.cleanBackups();
+//        maintenance.startSynergy();
+//        maintenance.sendMail();
     }
     catch (std::runtime_error& e) {
         //*lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";

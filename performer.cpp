@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <string>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "performer.hpp"
 
@@ -29,21 +30,20 @@ int Performer::transferBackups() const {
     string str_backup_dest_host_dir = pCnf->findConfigParamValue("BACKUP", "backup_dest_host_dir");
     string str_backup_dest_user = pCnf->findConfigParamValue("BACKUP", "backup_dest_user");
     // composing string for shell execution
-    string str_execute("/usr/bin/find ");
-    str_execute+=str_backup_source_dir;
-    str_execute+="* -type d -ctime -1 -exec scp -qr {} ";
+    string str_execute("/usr/bin/rsync");
+    str_execute+=" -avzq -e ssh ";
+    str_execute+=str_backup_source_dir+=" ";
     str_execute+=str_backup_dest_user;
     str_execute+='@';
     str_execute+=str_backup_dest_host;
     str_execute+=":";
     str_execute+=str_backup_dest_host_dir;
-    str_execute+=" ';'";
     // transforming string to c-string as system() call wants it
     const char* cc_execute = str_execute.c_str();
     // writing to logfile
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting backups transferring";
     // executing
-    shExecute(cc_execute);
+    shExecuteExperimental(cc_execute);
 
     return 0;
 }
@@ -54,11 +54,11 @@ int Performer::cleanBackups() const {
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_execute("/usr/bin/find ");
     str_execute+=str_backup_source_dir;
-    str_execute+=" -type d -ctime +7 -delete";
+    str_execute+=" -type d -ctime +30 -exec rm {} ;";
     const char* cc_execute = str_execute.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting cleaning backups";
-    shExecute(cc_execute);
+    shExecuteExperimental(cc_execute);
     return 0;
 }
 
@@ -156,7 +156,7 @@ int Performer::startSynergy() const {
     const char* cc_execute = start_synergy.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting Synergy";
-    shExecute(cc_execute);
+    shExecuteExperimental(cc_execute);
 
     return 0;
 }
@@ -187,6 +187,79 @@ int Performer::shExecute(const char* stringToExecute) const {
         return(EXIT_SUCCESS);
     } else {                                                                    // got not error but "the return status of the command"
         do {
+            /* INFO:
+             * The waitpid() system call suspends execution of the calling process until a child specified by pid argument has changed state.
+             * By default, waitpid() waits only for terminated children, but this behavior is modifiable via the options argument.
+             *
+             * WUNTRACED   also return if a child has stopped (but not traced via ptrace(2))
+             * WCONTINUED  also return if a stopped child has been resumed by delivery of SIGCONT
+             *
+             * The value of pid can be:
+             * < -1   meaning wait for any child process whose process group ID is equal to the absolute value of pid.
+             * -1     meaning wait for any child process.
+             * 0      meaning wait for any child process whose process group ID is equal to that of the calling process.
+             * > 0    meaning wait for the child whose process ID is equal to the value of pid.
+             */
+            w = waitpid(child_pid, &status, WUNTRACED | WCONTINUED);                 // waiting the child process to perform requested actions
+            if (w == -1) {
+                throw std::runtime_error(strerror(errno));
+            }
+            /* NOTE:
+             * This macro queries the child termination status provided by the wait() and waitpid() functions, and determines whether the child process ended normally
+             */
+            if (WIFEXITED(status)) {
+                *pLog << pLog->date() << "SEVERITY [INFO]: Exited, status=" << WEXITSTATUS(status);
+            } else if (WIFSIGNALED(status)) {
+                *pLog << pLog->date() << "SEVERITY [WARNING]: Killed by signal " << WTERMSIG(status);
+            } else if (WIFSTOPPED(status)) {
+                *pLog << pLog->date() << "SEVERITY [WARNING]: Stopped by signal" << WSTOPSIG(status);
+            } else if (WIFCONTINUED(status)) {
+                *pLog << pLog->date() << "SEVERITY [INFO]: Continued";
+            }
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+        *pLog << pLog->date() << "SEVERITY [INFO]: Process completed successfully";
+        return(EXIT_SUCCESS);
+    }
+}
+
+int Performer::shExecuteExperimental(const char* stringToExecute) const {
+
+    namespace ba = boost::algorithm;
+
+    string s(stringToExecute);
+    vector<string> fields;
+    ba::split(fields, s, ba::is_any_of(" "));
+
+    const char* argumentsArray[fields.size()+1];
+
+    for (unsigned int i = 0; i < fields.size(); ++i) {
+        argumentsArray[i] = fields[i].c_str();
+    }
+    /* NOTE:
+     * We need whitespace at the end of any argument, but boost::split erased it of course
+     * so lets restore */
+    argumentsArray[fields.size()] = NULL;
+
+    pid_t child_pid, w;
+    int status;
+
+    child_pid = fork();
+
+    if ( child_pid == 0 ) {
+        /* NOTE:
+         * This is done by the child process
+         */
+        *pLog << pLog->date() << "SEVERITY [INFO]: Done. Child process PID was:" << (long)getpid();
+        execv(argumentsArray[0], const_cast<char** const>(argumentsArray));
+        /* NOTE:
+         * If execv returns, it must have failed */
+        throw std::runtime_error(strerror(errno));
+    } else {                                                                    // got not error but "the return status of the command"
+        do {
+            /* INFO:
+             * This is run by the parent.  Wait for the child
+               to terminate
+             */
             /* INFO:
              * The waitpid() system call suspends execution of the calling process until a child specified by pid argument has changed state.
              * By default, waitpid() waits only for terminated children, but this behavior is modifiable via the options argument.

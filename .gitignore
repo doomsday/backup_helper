@@ -1,1 +1,2 @@
-backup_helper.pro*
+backup_helper.pro.*
+*.autosave

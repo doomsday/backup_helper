@@ -10,6 +10,7 @@ class Performer
         std::shared_ptr<Config> pCnf;
         std::shared_ptr<Logger> pLog;
         int shExecute(const char *stringToExecute) const;
+        int shExecuteExperimental(const char *stringToExecute) const;
         pid_t getPIDByName(const char * name) const;
         pid_t getIDFromPidfile(string pidfile_path) const;
         bool getStatusFromPID(const pid_t process_id) const;
