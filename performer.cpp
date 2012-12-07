@@ -30,16 +30,14 @@ int Performer::transferBackups() const {
     string str_backup_dest_host_dir = pCnf->findConfigParamValue("BACKUP", "backup_dest_host_dir");
     string str_backup_dest_user = pCnf->findConfigParamValue("BACKUP", "backup_dest_user");
     // composing string for shell execution
-    string str_execute("/usr/bin/find ");
-    str_execute+=str_backup_source_dir;
-    str_execute+="/*";
-    str_execute+=" -type d -ctime -1 -exec scp -qr {} ";
+    string str_execute("/usr/bin/rsync");
+    str_execute+=" -avzq -e ssh ";
+    str_execute+=str_backup_source_dir+=" ";
     str_execute+=str_backup_dest_user;
     str_execute+='@';
     str_execute+=str_backup_dest_host;
     str_execute+=":";
     str_execute+=str_backup_dest_host_dir;
-    str_execute+="/{} ;";
     // transforming string to c-string as system() call wants it
     const char* cc_execute = str_execute.c_str();
     // writing to logfile
@@ -235,13 +233,11 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
     const char* argumentsArray[fields.size()+1];
 
     for (unsigned int i = 0; i < fields.size(); ++i) {
-        /* NOTE:
-         * We need whitespace at the end of any argument, but boost::split erased it of course
-         * so lest restore
-         */
         argumentsArray[i] = fields[i].c_str();
     }
-
+    /* NOTE:
+     * We need whitespace at the end of any argument, but boost::split erased it of course
+     * so lets restore */
     argumentsArray[fields.size()] = NULL;
 
     pid_t child_pid, w;
@@ -256,8 +252,7 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
         *pLog << pLog->date() << "SEVERITY [INFO]: Done. Child process PID was:" << (long)getpid();
         execv(argumentsArray[0], const_cast<char** const>(argumentsArray));
         /* NOTE:
-         * If execv returns, it must have failed
-         */
+         * If execv returns, it must have failed */
         throw std::runtime_error(strerror(errno));
     } else {                                                                    // got not error but "the return status of the command"
         do {
