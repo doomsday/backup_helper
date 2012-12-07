@@ -16,5 +16,6 @@ HEADERS += \
     logger.hpp
 
 OTHER_FILES += \
-    README.txt
+    README.txt \
+    bh.conf
 
