@@ -1,7 +1,9 @@
 TEMPLATE = app
 CONFIG += console
 CONFIG -= qt
+CONFIG += static
 QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -static-libstdc++
 
 SOURCES += main.cpp \
     config.cpp \

@@ -12,15 +12,16 @@ int main(int argc, char *argv[]) {
         /* NOTE:
          * Read configuration file to use it everywhere in the program later
          */
-        std::shared_ptr<Config> cnf(new Config(argc, argv));
-        std::shared_ptr<Logger> lgr(new Logger(cnf));
+        auto cnf = std::make_shared<Config>(argc, argv);
+        auto lgr = std::make_shared<Logger>(cnf);
+
         Performer maintenance(cnf, lgr);
 
-//        maintenance.shutdownSynergy();
+        maintenance.shutdownSynergy();
         maintenance.transferBackups();
-//        maintenance.cleanBackups();
-//        maintenance.startSynergy();
-//        maintenance.sendMail();
+        maintenance.cleanBackups();
+        maintenance.startSynergy();
+        maintenance.sendMail();
     }
     catch (std::runtime_error& e) {
         //*lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
