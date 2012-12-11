@@ -8,12 +8,15 @@
 
 int main(int argc, char *argv[]) {
 
+    std::shared_ptr<Config> cnf(0);
+    std::shared_ptr<Logger> lgr(0);
+
     try {
         /* NOTE:
          * Read configuration file to use it everywhere in the program later
          */
-        auto cnf = std::make_shared<Config>(argc, argv);
-        auto lgr = std::make_shared<Logger>(cnf);
+        cnf = std::make_shared<Config>(argc, argv);
+        lgr = std::make_shared<Logger>(cnf);
 
         Performer maintenance(cnf, lgr);
 
@@ -24,9 +27,8 @@ int main(int argc, char *argv[]) {
         maintenance.sendMail();
     }
     catch (std::runtime_error& e) {
-        //*lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
-        std::cout << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
-        std::cout << "\nFatal Error, unable to process. Exit.\n";
+        *lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
+        std::cout << "SEVERITY [FATAL]: Runtime error: \"" << e.what() << "\"";
         return 1;
     }
     return 0;

@@ -29,7 +29,7 @@ int Performer::transferBackups() const {
     string str_backup_dest_host = pCnf->findConfigParamValue("BACKUP", "backup_dest_host");
     string str_backup_dest_host_dir = pCnf->findConfigParamValue("BACKUP", "backup_dest_host_dir");
     string str_backup_dest_user = pCnf->findConfigParamValue("BACKUP", "backup_dest_user");
-    // composing string for shell execution
+    // composing string for execution
     string str_execute("/usr/bin/rsync");
     str_execute+=" -avzq -e ssh ";
     str_execute+=str_backup_source_dir+=" ";
@@ -38,12 +38,10 @@ int Performer::transferBackups() const {
     str_execute+=str_backup_dest_host;
     str_execute+=":";
     str_execute+=str_backup_dest_host_dir;
-    // transforming string to c-string as system() call wants it
-    const char* cc_execute = str_execute.c_str();
     // writing to logfile
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting backups transferring";
-    // executing
-    shExecuteExperimental(cc_execute);
+    // transforming string to c-string as system() call wants it, and executing
+    shExecuteExperimental(str_execute.c_str());
 
     return 0;
 }
@@ -54,11 +52,10 @@ int Performer::cleanBackups() const {
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_execute("/usr/bin/find ");
     str_execute+=str_backup_source_dir;
-    str_execute+=" -type d -ctime +30 -exec rm {} ;";
-    const char* cc_execute = str_execute.c_str();
+    str_execute+=" -type d -ctime +7 -exec rm {} ;";
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting cleaning backups";
-    shExecuteExperimental(cc_execute);
+    shExecuteExperimental(str_execute.c_str());
     return 0;
 }
 
@@ -73,16 +70,13 @@ int Performer::sendMail() const {
     str_execute+=" -b ";
     str_execute+=str_email_to;
 
-    const char* cc_execute = str_execute.c_str();
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting send mail";
-    shExecute(cc_execute);
+    shExecute(str_execute.c_str());
     return 0;
 }
 
 int Performer::shutdownSynergy() const {
-    /* TODO:
-     * Write to log [ FAIL: Failed to open or read pidfile. Suppose it doesn't exist. Trying to find process automatically ]
-     */
+
     bool is_pid_from_pidfile;
     pid_t kpid;
     string pidfile_path = pCnf->findConfigParamValue("GENERAL", "synergy_pidfile");
@@ -122,8 +116,8 @@ int Performer::shutdownSynergy() const {
      * Suppose we found PID of synergy
      */
     try {
-        *pLog << pLog->date() << "SEVERITY [INFO]: PID was successfully found";
-        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to send SIGKILL to PID";
+        *pLog << pLog->date() << "SEVERITY [INFO]: PID was successfully found: [" << kpid << "]";
+        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to send SIGKILL to PID [" << kpid << "]";
         softKill(kpid, cc_pidfile_path);
     }
     catch (std::exception& e) {
@@ -153,10 +147,9 @@ int Performer::shutdownSynergy() const {
 
 int Performer::startSynergy() const {
     string start_synergy("/etc/init.d/arta-synergy-jboss start");
-    const char* cc_execute = start_synergy.c_str();
 
     *pLog << pLog->date() << "SEVERITY [INFO]: Starting Synergy";
-    shExecuteExperimental(cc_execute);
+    shExecuteExperimental(start_synergy.c_str());
 
     return 0;
 }
@@ -442,7 +435,7 @@ int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path) con
             if ( killwait_counter >= 120 ) {
                 throw std::runtime_error("Unable to stop the process");
             }
-        } while (!access(cc_pidfile_path, F_OK));
+        } while (access(cc_pidfile_path, F_OK) == 0);
     }
     return 0;
 }
