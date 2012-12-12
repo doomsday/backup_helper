@@ -29,7 +29,7 @@ void Config::readConfig(int argc_p, char *argv_p[]) {
          * ifstream	default mode parameter is "ios::in"
          */
         in.exceptions ( ifstream::failbit | ifstream::badbit );
-        in.open(pConfLocation);
+        in.open(pConfLocation, fstream::in);
     } catch ( ifstream::failure e ) {
         throw std::runtime_error("Can't open configuration file");
     }

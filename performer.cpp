@@ -415,7 +415,7 @@ bool Performer::getStatusFromPID(const pid_t process_id) const {
 }
 
 int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path) const {
-    pid_t cpid = kill(process_id, SIGKILL);
+    pid_t cpid = kill(process_id, SIGTERM);
     /* NOTE:
          * В случае успеха, возвращается ноль. При ошибке, возвращается -1 и значение errno устанавливается соответствующим образом.
          */
@@ -442,7 +442,7 @@ int Performer::softKill(const pid_t process_id, const char* cc_pidfile_path) con
 
 int Performer::hardKill(const pid_t process_id) const {
 
-    pid_t cpid = kill( process_id, SIGTERM );
+    pid_t cpid = kill( process_id, SIGKILL );
     /* NOTE:
              * On success (at least one signal was sent), zero is returned.
              * On error, -1 is returned, and errno is set appropriately.
@@ -458,13 +458,13 @@ int Performer::hardKill(const pid_t process_id) const {
                  */
         if (cpid == -1) {
             /* TODO:
-                     * 1. It's possible to more than one Java processes to coexist
-                     * if it is, we will think that we couldn't kill kill it. So it's necessary
-                     * to check existence of process by it's pid that has previously been detected
-                     * 2. Check unlink() results
-                     */
+             * 1. It's possible to more than one Java processes to coexist
+             * if it is, we will think that we couldn't kill kill it. So it's necessary
+             * to check existence of process by it's pid that has previously been detected
+             * 2. Check unlink() results
+             */
             /* NOTE:
-                     * If killed successfully - go away
+             * If killed successfully - go away
              */
             return 0;
         } else {

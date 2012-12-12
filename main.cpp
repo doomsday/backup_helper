@@ -8,16 +8,35 @@
 
 int main(int argc, char *argv[]) {
 
-    std::shared_ptr<Config> cnf(0);
-    std::shared_ptr<Logger> lgr(0);
+    std::shared_ptr<Config> cnf;
+    std::shared_ptr<Logger> lgr;
+
+    try {
+        cnf = std::make_shared<Config>(argc, argv);
+    } catch (std::runtime_error& e) {
+        ofstream error;
+        error.open("/tmp/hdsh.error.log", ofstream::out | ofstream::app);
+        error << "SEVERITY [FATAL]: Runtime error: \"" << e.what() << "\"";
+        error.close();
+        std::cout << "SEVERITY [FATAL]: Initialization failed. See \"/tmp/hdsh.error.log\" for details" << std::endl;
+        return 1;
+    }
+
+    try {
+        lgr = std::make_shared<Logger>(cnf);
+    } catch (std::runtime_error& e) {
+        ofstream error;
+        error.open("/tmp/hdsh.error.log", ofstream::out | ofstream::app);
+        error << "SEVERITY [FATAL]: Runtime error: \"" << e.what() << "\"";
+        error.close();
+        std::cout << "SEVERITY [FATAL]: Initialization failed. See \"/tmp/hdsh.error.log\" for details" << std::endl;
+        return 1;
+    }
 
     try {
         /* NOTE:
          * Read configuration file to use it everywhere in the program later
          */
-        cnf = std::make_shared<Config>(argc, argv);
-        lgr = std::make_shared<Logger>(cnf);
-
         Performer maintenance(cnf, lgr);
 
         maintenance.shutdownSynergy();
