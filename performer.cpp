@@ -29,9 +29,11 @@ int Performer::transferBackups() const {
     string str_backup_dest_host = pCnf->findConfigParamValue("BACKUP", "backup_dest_host");
     string str_backup_dest_host_dir = pCnf->findConfigParamValue("BACKUP", "backup_dest_host_dir");
     string str_backup_dest_user = pCnf->findConfigParamValue("BACKUP", "backup_dest_user");
+    string str_backup_dest_host_port = pCnf->findConfigParamValue("BACKUP", "backup_dest_host_port");
     // composing string for execution
     string str_execute("/usr/bin/rsync");
-    str_execute+=" -avzq -e ssh ";
+    str_execute+=" -avzq -e \"ssh -p ";
+    str_execute+=str_backup_dest_host_port+="\" ";
     str_execute+=str_backup_source_dir+=" ";
     str_execute+=str_backup_dest_user;
     str_execute+='@';
@@ -39,9 +41,9 @@ int Performer::transferBackups() const {
     str_execute+=":";
     str_execute+=str_backup_dest_host_dir;
     // writing to logfile
-    *pLog << pLog->date() << "SEVERITY [INFO]: Starting backups transferring";
+    *pLog << pLog->date() << "[INFO]: Starting backups transferring";
     // transforming string to c-string as system() call wants it, and executing
-    shExecuteExperimental(str_execute.c_str());
+    shExecute(str_execute.c_str());
 
     return 0;
 }
@@ -54,7 +56,7 @@ int Performer::cleanBackups() const {
     str_execute+=str_backup_source_dir;
     str_execute+=" -type d -ctime +7 -exec rm {} ;";
 
-    *pLog << pLog->date() << "SEVERITY [INFO]: Starting cleaning backups";
+    *pLog << pLog->date() << "[INFO]: Starting cleaning backups";
     shExecuteExperimental(str_execute.c_str());
     return 0;
 }
@@ -70,7 +72,7 @@ int Performer::sendMail() const {
     str_execute+=" -b ";
     str_execute+=str_email_to;
 
-    *pLog << pLog->date() << "SEVERITY [INFO]: Starting send mail";
+    *pLog << pLog->date() << "[INFO]: Starting send mail";
     shExecute(str_execute.c_str());
     return 0;
 }
@@ -83,14 +85,14 @@ int Performer::shutdownSynergy() const {
     string hardkill_or_not = pCnf->findConfigParamValue("GENERAL", "term_if_cant_kill");
     const char* cc_pidfile_path = pidfile_path.c_str();
 
-    *pLog << pLog->date() << "SEVERITY [INFO]: \"synergy_pidfile\" value is " << pidfile_path;
-    *pLog << pLog->date() << "SEVERITY [INFO]: \"term_if_cant_kill\" value is " << hardkill_or_not;
+    *pLog << pLog->date() << "[INFO]: \"synergy_pidfile\" value is " << pidfile_path;
+    *pLog << pLog->date() << "[INFO]: \"term_if_cant_kill\" value is " << hardkill_or_not;
 
     /* NEXT:
      * Get pid from pidfile or any other possible way
      */
     try {
-        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to find PID in PID-file";
+        *pLog << pLog->date() << "[INFO]: Trying to find PID in PID-file";
         kpid = getIDFromPidfile(pidfile_path);
         is_pid_from_pidfile = 1;
         /* NEXT:
@@ -104,8 +106,8 @@ int Performer::shutdownSynergy() const {
          * If getPIDByName fails it will throw and exception that will be caught
          * outside of shutdownSynergy, cause we have nothing to do
          */
-        *pLog << pLog->date() << "SEVERITY [WARNING]: Unable to find PID in PID-file";
-        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to find PID by process name";
+        *pLog << pLog->date() << "[WARNING]: Unable to find PID in PID-file";
+        *pLog << pLog->date() << "[INFO]: Trying to find PID by process name";
         kpid = getPIDByName("java");
         /* NEXT:
          * If PID found lets go to kill it
@@ -116,16 +118,16 @@ int Performer::shutdownSynergy() const {
      * Suppose we found PID of synergy
      */
     try {
-        *pLog << pLog->date() << "SEVERITY [INFO]: PID was successfully found: [" << kpid << "]";
-        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to send SIGKILL to PID [" << kpid << "]";
+        *pLog << pLog->date() << "[INFO]: PID was successfully found: [" << kpid << "]";
+        *pLog << pLog->date() << "[INFO]: Trying to send SIGKILL to PID [" << kpid << "]";
         softKill(kpid, cc_pidfile_path);
     }
     catch (std::exception& e) {
         /* NEXT:
          * Failed to send SIGKILL or unable to stop it, don't exactly know why, but anyway lets try to SIGTERM it
          */
-        *pLog << pLog->date() << "SEVERITY [WARNING]: Unable to SIGKILL process";
-        *pLog << pLog->date() << "SEVERITY [INFO]: Trying to send SIGTERM to PID";
+        *pLog << pLog->date() << "[WARNING]: Unable to SIGKILL process";
+        *pLog << pLog->date() << "[INFO]: Trying to send SIGTERM to PID";
         if (hardkill_or_not == "1") {
             /* NEXT:
              * Run hardkill() and don't catch any exceptions, cause we can do
@@ -133,7 +135,7 @@ int Performer::shutdownSynergy() const {
              */
             hardKill(kpid);
             if (is_pid_from_pidfile == 1) {
-                *pLog << pLog->date() << "SEVERITY [INFO]: Removing pidfile";
+                *pLog << pLog->date() << "[INFO]: Removing pidfile";
                 unlink(cc_pidfile_path);
             }
         } else if ( hardkill_or_not == "0" ) {
@@ -148,7 +150,7 @@ int Performer::shutdownSynergy() const {
 int Performer::startSynergy() const {
     string start_synergy("/etc/init.d/arta-synergy-jboss start");
 
-    *pLog << pLog->date() << "SEVERITY [INFO]: Starting Synergy";
+    *pLog << pLog->date() << "[INFO]: Starting Synergy";
     shExecuteExperimental(start_synergy.c_str());
 
     return 0;
@@ -176,7 +178,7 @@ int Performer::shExecute(const char* stringToExecute) const {
         throw std::runtime_error(strerror(errno));                               // strerror: Get pointer to error message string
     }
     if ( child_pid == 0 ) {
-        *pLog << pLog->date() << "SEVERITY [INFO]: Done. Child process PID was:" << (long)getpid();
+        *pLog << pLog->date() << "[INFO]: Done. Child process PID was: " << (long)getpid();
         return(EXIT_SUCCESS);
     } else {                                                                    // got not error but "the return status of the command"
         do {
@@ -201,16 +203,16 @@ int Performer::shExecute(const char* stringToExecute) const {
              * This macro queries the child termination status provided by the wait() and waitpid() functions, and determines whether the child process ended normally
              */
             if (WIFEXITED(status)) {
-                *pLog << pLog->date() << "SEVERITY [INFO]: Exited, status=" << WEXITSTATUS(status);
+                *pLog << pLog->date() << "[INFO]: Exited, status=" << WEXITSTATUS(status);
             } else if (WIFSIGNALED(status)) {
-                *pLog << pLog->date() << "SEVERITY [WARNING]: Killed by signal " << WTERMSIG(status);
+                *pLog << pLog->date() << "[WARNING]: Killed by signal " << WTERMSIG(status);
             } else if (WIFSTOPPED(status)) {
-                *pLog << pLog->date() << "SEVERITY [WARNING]: Stopped by signal" << WSTOPSIG(status);
+                *pLog << pLog->date() << "[WARNING]: Stopped by signal" << WSTOPSIG(status);
             } else if (WIFCONTINUED(status)) {
-                *pLog << pLog->date() << "SEVERITY [INFO]: Continued";
+                *pLog << pLog->date() << "[INFO]: Continued";
             }
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-        *pLog << pLog->date() << "SEVERITY [INFO]: Process completed successfully";
+//        *pLog << pLog->date() << "[INFO]: Process completed successfully";
         return(EXIT_SUCCESS);
     }
 }
@@ -228,9 +230,9 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
     for (unsigned int i = 0; i < fields.size(); ++i) {
         argumentsArray[i] = fields[i].c_str();
     }
-    /* NOTE:
-     * We need whitespace at the end of any argument, but boost::split erased it of course
-     * so lets restore */
+    /* NEXT:
+     * We need whitespace at the end of any argument ov execv(), but boost::split
+     * erased it, of course, so lets restore */
     argumentsArray[fields.size()] = NULL;
 
     pid_t child_pid, w;
@@ -242,7 +244,7 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
         /* NOTE:
          * This is done by the child process
          */
-        *pLog << pLog->date() << "SEVERITY [INFO]: Done. Child process PID was:" << (long)getpid();
+        *pLog << pLog->date() << "[INFO]: Child process PID is: " << (long)getpid();
         execv(argumentsArray[0], const_cast<char** const>(argumentsArray));
         /* NOTE:
          * If execv returns, it must have failed */
@@ -274,16 +276,15 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
              * This macro queries the child termination status provided by the wait() and waitpid() functions, and determines whether the child process ended normally
              */
             if (WIFEXITED(status)) {
-                *pLog << pLog->date() << "SEVERITY [INFO]: Exited, status=" << WEXITSTATUS(status);
+                *pLog << pLog->date() << "[INFO]: Exited, status=" << WEXITSTATUS(status) << (long)getpid();
             } else if (WIFSIGNALED(status)) {
-                *pLog << pLog->date() << "SEVERITY [WARNING]: Killed by signal " << WTERMSIG(status);
+                *pLog << pLog->date() << "[WARNING]: Killed by signal " << WTERMSIG(status);
             } else if (WIFSTOPPED(status)) {
-                *pLog << pLog->date() << "SEVERITY [WARNING]: Stopped by signal" << WSTOPSIG(status);
+                *pLog << pLog->date() << "[WARNING]: Stopped by signal" << WSTOPSIG(status);
             } else if (WIFCONTINUED(status)) {
-                *pLog << pLog->date() << "SEVERITY [INFO]: Continued";
+                *pLog << pLog->date() << "[INFO]: Continued";
             }
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-        *pLog << pLog->date() << "SEVERITY [INFO]: Process completed successfully";
         return(EXIT_SUCCESS);
     }
 }

@@ -33,15 +33,15 @@ int main(int argc, char *argv[]) {
          */
         Performer maintenance(cnf, lgr);
 
-        maintenance.shutdownSynergy();
-        maintenance.transferBackups();
-        maintenance.cleanBackups();
+//        maintenance.shutdownSynergy();
+//        maintenance.transferBackups();
+//        maintenance.cleanBackups();
         maintenance.startSynergy();
-        maintenance.sendMail();
+//        maintenance.sendMail();
     }
     catch (std::runtime_error& e) {
-        *lgr << lgr->date() << "SEVERITY [ERROR]: Runtime error: \"" << e.what() << "\"";
-        std::cout << "SEVERITY [FATAL]: Runtime error: \"" << e.what() << "\"";
+        *lgr << lgr->date() << "[ERROR]: Runtime error: \"" << e.what() << "\"";
+        std::cout << "[FATAL]: Runtime error: \"" << e.what() << "\"\n";
         return 1;
     }
     return 0;
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 void fallback_error (const char* error_message) {
     ofstream error;
     error.open("/tmp/hdsh.error.log", ofstream::out | ofstream::app);
-    error << "SEVERITY [FATAL]: Runtime error: \"" << error_message << "\"";
+    error << "[FATAL]: Runtime error: \"" << error_message << "\"";
     error.close();
-    std::cout << "SEVERITY [FATAL]: Initialization failed. See \"/tmp/hdsh.error.log\" for details" << std::endl;
+    std::cout << "[FATAL]: Initialization failed. See \"/tmp/hdsh.error.log\" for details" << std::endl;
 }
