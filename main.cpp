@@ -34,9 +34,9 @@ int main(int argc, char *argv[]) {
         Performer maintenance(cnf, lgr);
 
 //        maintenance.shutdownSynergy();
-//        maintenance.transferBackups();
+        maintenance.transferBackups();
 //        maintenance.cleanBackups();
-        maintenance.startSynergy();
+//        maintenance.startSynergy();
 //        maintenance.sendMail();
     }
     catch (std::runtime_error& e) {

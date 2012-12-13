@@ -25,6 +25,7 @@ Performer::Performer(std::shared_ptr<Config> ptr, std::shared_ptr<Logger> lgr):
 /* TODO: Add exceptions */
 int Performer::transferBackups() const {
     // search for config values
+
     string str_backup_source_dir = pCnf->findConfigParamValue("BACKUP", "backup_source_dir");
     string str_backup_dest_host = pCnf->findConfigParamValue("BACKUP", "backup_dest_host");
     string str_backup_dest_host_dir = pCnf->findConfigParamValue("BACKUP", "backup_dest_host_dir");
@@ -87,7 +88,6 @@ int Performer::shutdownSynergy() const {
 
     *pLog << pLog->date() << "[INFO]: \"synergy_pidfile\" value is " << pidfile_path;
     *pLog << pLog->date() << "[INFO]: \"term_if_cant_kill\" value is " << hardkill_or_not;
-
     /* NEXT:
      * Get pid from pidfile or any other possible way
      */
@@ -119,15 +119,15 @@ int Performer::shutdownSynergy() const {
      */
     try {
         *pLog << pLog->date() << "[INFO]: PID was successfully found: [" << kpid << "]";
-        *pLog << pLog->date() << "[INFO]: Trying to send SIGKILL to PID [" << kpid << "]";
+        *pLog << pLog->date() << "[INFO]: Trying to send SIGTERM to PID [" << kpid << "]";
         softKill(kpid, cc_pidfile_path);
     }
     catch (std::exception& e) {
         /* NEXT:
          * Failed to send SIGKILL or unable to stop it, don't exactly know why, but anyway lets try to SIGTERM it
          */
-        *pLog << pLog->date() << "[WARNING]: Unable to SIGKILL process";
-        *pLog << pLog->date() << "[INFO]: Trying to send SIGTERM to PID";
+        *pLog << pLog->date() << "[WARNING]: Unable to SIGTERM process";
+        *pLog << pLog->date() << "[INFO]: Trying to send SIGKILL to PID";
         if (hardkill_or_not == "1") {
             /* NEXT:
              * Run hardkill() and don't catch any exceptions, cause we can do
@@ -178,7 +178,7 @@ int Performer::shExecute(const char* stringToExecute) const {
         throw std::runtime_error(strerror(errno));                               // strerror: Get pointer to error message string
     }
     if ( child_pid == 0 ) {
-        *pLog << pLog->date() << "[INFO]: Done. Child process PID was: " << (long)getpid();
+        *pLog << pLog->date() << "[INFO]: Done. Child process PID is: " << (long)getpid();
         return(EXIT_SUCCESS);
     } else {                                                                    // got not error but "the return status of the command"
         do {
@@ -212,7 +212,7 @@ int Performer::shExecute(const char* stringToExecute) const {
                 *pLog << pLog->date() << "[INFO]: Continued";
             }
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-//        *pLog << pLog->date() << "[INFO]: Process completed successfully";
+        *pLog << pLog->date() << "[INFO]: Process completed";
         return(EXIT_SUCCESS);
     }
 }
@@ -242,7 +242,8 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
 
     if ( child_pid == 0 ) {
         /* NOTE:
-         * This is done by the child process
+         * This is done by the child process because child_pid for it will be 0
+         * but for parent child_pid will have the value of PID if the child
          */
         *pLog << pLog->date() << "[INFO]: Child process PID is: " << (long)getpid();
         execv(argumentsArray[0], const_cast<char** const>(argumentsArray));
@@ -276,15 +277,16 @@ int Performer::shExecuteExperimental(const char* stringToExecute) const {
              * This macro queries the child termination status provided by the wait() and waitpid() functions, and determines whether the child process ended normally
              */
             if (WIFEXITED(status)) {
-                *pLog << pLog->date() << "[INFO]: Exited, status=" << WEXITSTATUS(status) << (long)getpid();
+                *pLog << pLog->date() << "[INFO]: Child process Exited, status=" << WEXITSTATUS(status) << (long)getpid();
             } else if (WIFSIGNALED(status)) {
-                *pLog << pLog->date() << "[WARNING]: Killed by signal " << WTERMSIG(status);
+                *pLog << pLog->date() << "[WARNING]: Child process Killed by signal " << WTERMSIG(status);
             } else if (WIFSTOPPED(status)) {
-                *pLog << pLog->date() << "[WARNING]: Stopped by signal" << WSTOPSIG(status);
+                *pLog << pLog->date() << "[WARNING]: Child process Stopped by signal" << WSTOPSIG(status);
             } else if (WIFCONTINUED(status)) {
-                *pLog << pLog->date() << "[INFO]: Continued";
+                *pLog << pLog->date() << "[INFO]: Child process Continued";
             }
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+        *pLog << pLog->date() << "[INFO]: Child process Completed";
         return(EXIT_SUCCESS);
     }
 }
@@ -445,19 +447,19 @@ int Performer::hardKill(const pid_t process_id) const {
 
     pid_t cpid = kill( process_id, SIGKILL );
     /* NOTE:
-             * On success (at least one signal was sent), zero is returned.
-             * On error, -1 is returned, and errno is set appropriately.
-             */
+     * On success (at least one signal was sent), zero is returned.
+     * On error, -1 is returned, and errno is set appropriately.
+     */
     if ( cpid == -1 ) {
         throw std::runtime_error(strerror(errno));
     } else if ( cpid == 0 ) {
         sleep (5);
-        cpid = getPIDByName("java");
+        cpid = getStatusFromPID(process_id);
         /* NOTE:
-                 * The return value of procFind is -1 if no processed was found or can't open /proc
-                 * directory. Otherwise the return value is processe's PID
-                 */
-        if (cpid == -1) {
+         * The return value of procFind is -1 if no processed was found or can't open /proc
+         * directory. Otherwise the return value is processe's PID
+         */
+        if (cpid == 0) {
             /* TODO:
              * 1. It's possible to more than one Java processes to coexist
              * if it is, we will think that we couldn't kill kill it. So it's necessary
