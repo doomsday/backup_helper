@@ -33,11 +33,11 @@ int main(int argc, char *argv[]) {
          */
         Performer maintenance(cnf, lgr);
 
-//        maintenance.shutdownSynergy();
+        maintenance.shutdownSynergy();
         maintenance.transferBackups();
-//        maintenance.cleanBackups();
-//        maintenance.startSynergy();
-//        maintenance.sendMail();
+        maintenance.cleanBackups();
+        maintenance.startSynergy();
+        maintenance.sendMail();
     }
     catch (std::runtime_error& e) {
         *lgr << lgr->date() << "[ERROR]: Runtime error: \"" << e.what() << "\"";
