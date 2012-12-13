@@ -29,7 +29,7 @@ void Config::readConfig(int argc_p, char *argv_p[]) {
          * ifstream	default mode parameter is "ios::in"
          */
         in.exceptions ( ifstream::failbit | ifstream::badbit );
-        in.open(pConfLocation);
+        in.open(pConfLocation, fstream::in);
     } catch ( ifstream::failure e ) {
         throw std::runtime_error("Can't open configuration file");
     }
@@ -85,15 +85,17 @@ void Config::readConfig(int argc_p, char *argv_p[]) {
      */
     parse_info<> info = parse(text.c_str(), parser, nothing_p);
     if ( !info.hit ) {
-        throw std::runtime_error("Error has been detected in configuration file. Please double check it.");
+        throw std::runtime_error("Error has been detected in configuration file. Double check it.");
     }
 }
 
 string Config::findConfigParamValue(string section, string param) const {
     string res;
     if (find_value(conf_data, section, param, res)) {
+        if (res == "")
+            throw std::runtime_error(string("Required configuration parameter \"") += param += string("in section \"") += section += string("\" is blank"));
         return res;
     } else {
-        throw std::runtime_error(string("Unable to find \"") += res += string("\" parameter in configuration file"));
+        throw std::runtime_error(string("Unable to find \"") += param += string("\" parameter in configuration file"));
     }
 }
